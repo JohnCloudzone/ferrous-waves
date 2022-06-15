@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: microservice-deployment
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: java-microservice
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: java-microservice
+    spec:
+      containers:
+      - name: java-microservice-container
+        image: public.ecr.aws/h9e8o5y5/heloworlddemoeks:latest
+        ports:
+        - containerPort: 4567
