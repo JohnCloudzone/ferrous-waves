@@ -1,0 +1,47 @@
+[package]
+name = "ferrous-waves"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+authors = ["Brandon Williams <brandon@example.com>"]
+description = "High-fidelity audio analysis bridge for development workflows"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/willibrandon/ferrous-waves"
+keywords = ["audio", "analysis", "mcp", "fft", "visualization"]
+categories = ["multimedia::audio", "science", "visualization"]
+
+[dependencies]
+# Audio processing
+symphonia = { version = "0.5", features = ["all"] }
+hound = "3.5"
+
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Configuration
+config = "0.14"
+
+[dev-dependencies]
+criterion = "0.5"
+pretty_assertions = "1.4"
+tempfile = "3.8"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+
+[profile.bench]
+inherits = "release"
