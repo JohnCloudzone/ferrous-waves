@@ -19,11 +19,11 @@ impl MelFilterBank {
         }
     }
 
-    fn hz_to_mel(hz: f32) -> f32 {
+    pub fn hz_to_mel(hz: f32) -> f32 {
         2595.0 * (1.0 + hz / 700.0).log10()
     }
 
-    fn mel_to_hz(mel: f32) -> f32 {
+    pub fn mel_to_hz(mel: f32) -> f32 {
         700.0 * (10_f32.powf(mel / 2595.0) - 1.0)
     }
 
@@ -71,5 +71,9 @@ impl MelFilterBank {
 
     pub fn apply(&self, spectrogram: &Array2<f32>) -> Array2<f32> {
         self.filter_bank.dot(spectrogram)
+    }
+
+    pub fn get_filters(&self) -> &Array2<f32> {
+        &self.filter_bank
     }
 }

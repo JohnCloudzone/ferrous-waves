@@ -58,6 +58,10 @@ impl FftProcessor {
             .map(|c| c.arg())
             .collect()
     }
+
+    pub fn size(&self) -> usize {
+        self.size
+    }
 }
 
 #[cfg(test)]
