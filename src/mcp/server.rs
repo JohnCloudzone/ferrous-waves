@@ -617,21 +617,22 @@ impl FerrousWavesMcp {
         }
         .clamp(0.0, 1.0);
 
-        let structural_similarity =
-            if !analysis_a.segments.segments.is_empty() && !analysis_b.segments.segments.is_empty() {
-                analysis_a
+        let structural_similarity = if !analysis_a.segments.segments.is_empty()
+            && !analysis_b.segments.segments.is_empty()
+        {
+            analysis_a
+                .segments
+                .segments
+                .len()
+                .min(analysis_b.segments.segments.len()) as f32
+                / analysis_a
                     .segments
                     .segments
                     .len()
-                    .min(analysis_b.segments.segments.len()) as f32
-                    / analysis_a
-                        .segments
-                        .segments
-                        .len()
-                        .max(analysis_b.segments.segments.len()) as f32
-            } else {
-                0.5
-            };
+                    .max(analysis_b.segments.segments.len()) as f32
+        } else {
+            0.5
+        };
 
         let overall_similarity = (fingerprint_similarity * 0.4
             + spectral_similarity * 0.2
