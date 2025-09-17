@@ -94,9 +94,15 @@ ferrous-waves serve
 
 The server exposes three tools:
 
-#### `analyze_audio` - Comprehensive audio analysis with filtering and pagination
+#### `analyze_audio` - Analyze audio files with configurable depth
 Parameters:
 - `file_path` (required): Path to audio file
+- `analysis_profile`: Choose analysis depth (default: "standard")
+  - `"quick"`: Basic metrics only (fastest)
+  - `"standard"`: Core audio features
+  - `"detailed"`: All analysis modules
+  - `"fingerprint"`: Focus on similarity detection
+  - `"mastering"`: Focus on loudness and quality metrics
 - `return_format`: "summary" (default), "full", or "visual_only"
 - `include_visuals`: Include base64-encoded images (default: false, WARNING: very large)
 - `include_spectral`: Include spectral data arrays (default: false)
@@ -104,12 +110,23 @@ Parameters:
 - `max_data_points`: Limit array sizes for pagination (default: 1000)
 - `cursor`: Continue from previous response's next_cursor
 
-#### `compare_audio` - Compare two audio files with fingerprint similarity
+Response format includes:
+- Audio properties (format, duration, sample rate, channels)
+- Content type and confidence scores
+- Quality metrics (loudness LUFS, true peak, dynamic range)
+- Issues categorized by severity (critical, warnings, info)
+- Fingerprint data for similarity matching
+
+#### `compare_audio` - Compare two audio files
 Parameters:
 - `file_a`, `file_b` (required): Paths to audio files
 - `metrics`: Optional comparison metrics to calculate
 
-Returns fingerprint similarity score (0.0-1.0) and match type (Identical, Similar, Different, etc.)
+Returns:
+- Similarity scores: overall, fingerprint, spectral, perceptual, structural (0.0-1.0 scale)
+- Differences: loudness delta, tempo delta, quality delta, key change
+- Match type: Identical, Very Similar, Similar, Different
+- Use case suggestions: "Same recording", "Different master", "Cover version", etc.
 
 #### `get_job_status` - Check analysis job status
 Parameters:

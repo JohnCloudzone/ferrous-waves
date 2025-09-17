@@ -7,25 +7,39 @@ fn main() {
     println!("Example MCP Tool Calls:");
     println!();
 
-    // Example 1: Analyze with default settings (returns compact summary)
-    let analyze_summary = json!({
+    // Example 1: Analyze with different profiles
+    let analyze_quick = json!({
         "tool": "analyze_audio",
         "arguments": {
-            "file_path": "/path/to/audio.wav"
+            "file_path": "/path/to/audio.wav",
+            "analysis_profile": "quick"  // Fast analysis
         }
     });
-    println!("1. Analyze Audio (Summary - Default):");
+    println!("1. Analyze Audio (Quick Profile):");
+    println!("{}", serde_json::to_string_pretty(&analyze_quick).unwrap());
+    println!();
+
+    // Example 1b: Mastering profile for quality focus
+    let analyze_mastering = json!({
+        "tool": "analyze_audio",
+        "arguments": {
+            "file_path": "/path/to/audio.wav",
+            "analysis_profile": "mastering"  // Focus on loudness and quality
+        }
+    });
+    println!("1b. Analyze Audio (Mastering Profile):");
     println!(
         "{}",
-        serde_json::to_string_pretty(&analyze_summary).unwrap()
+        serde_json::to_string_pretty(&analyze_mastering).unwrap()
     );
     println!();
 
-    // Example 2: Analyze with spectral data and pagination
+    // Example 2: Analyze with detailed profile for complete analysis
     let analyze_detailed = json!({
         "tool": "analyze_audio",
         "arguments": {
             "file_path": "/path/to/audio.wav",
+            "analysis_profile": "detailed",  // All modules
             "return_format": "full",
             "include_spectral": true,
             "include_temporal": true,
@@ -33,7 +47,7 @@ fn main() {
             "cursor": null
         }
     });
-    println!("2. Analyze Audio (Full with Pagination):");
+    println!("2. Analyze Audio (Detailed Profile with Full Data):");
     println!(
         "{}",
         serde_json::to_string_pretty(&analyze_detailed).unwrap()

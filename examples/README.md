@@ -53,7 +53,12 @@ The `envelope_visualization` example creates a PNG image showing waveform with p
 
 ## MCP Server
 
-The `mcp_client.rs` example shows the JSON format for MCP tool calls. To use the actual MCP server:
+The `mcp_client.rs` example shows the JSON format for MCP tool calls, including:
+- Different analysis profiles (quick, standard, detailed, fingerprint, mastering)
+- Pagination with cursors
+- Comparison with similarity scoring
+
+To use the actual MCP server:
 
 ```bash
 # Start the MCP server
