@@ -150,8 +150,8 @@ fn test_multiple_frequencies() {
     // Find peaks
     let mut peaks = Vec::new();
     for i in 1..magnitude.len() - 1 {
-        if magnitude[i] > magnitude[i - 1] && magnitude[i] > magnitude[i + 1]
-            && magnitude[i] > 10.0 {
+        if magnitude[i] > magnitude[i - 1] && magnitude[i] > magnitude[i + 1] && magnitude[i] > 10.0
+        {
             // Threshold to filter noise
             let freq = i as f32 * sample_rate / size as f32;
             peaks.push(freq);

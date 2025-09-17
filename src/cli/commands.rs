@@ -268,9 +268,7 @@ pub async fn run_batch(
 
     let search_pattern = directory.join(&pattern);
     let paths: Vec<PathBuf> = glob(search_pattern.to_str().unwrap())
-        .map_err(|e| {
-            crate::utils::error::FerrousError::Io(std::io::Error::other(e))
-        })?
+        .map_err(|e| crate::utils::error::FerrousError::Io(std::io::Error::other(e)))?
         .filter_map(|r| r.ok())
         .collect();
 
