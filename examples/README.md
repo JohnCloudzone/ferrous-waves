@@ -20,6 +20,7 @@ This creates a `samples/` directory with test WAV files including sine waves, ch
 - **onset_detection.rs** - Detect note onsets and transients in audio
 - **cached_analysis.rs** - Using the cache system for faster repeated analysis
 - **batch_processing.rs** - Process multiple files in parallel
+- **envelope_visualization.rs** - Generate waveform visualization with peak and RMS envelopes
 - **generate_samples.rs** - Generate test WAV files for the examples
 
 ## Running Examples
@@ -33,7 +34,10 @@ cargo run --example spectral_analysis
 cargo run --example onset_detection
 cargo run --example cached_analysis
 cargo run --example batch_processing
+cargo run --example envelope_visualization
 ```
+
+The `envelope_visualization` example creates a PNG image showing waveform with peak and RMS envelopes.
 
 ## MCP Server
 
