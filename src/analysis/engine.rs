@@ -1,6 +1,7 @@
 use crate::analysis::classification::{ContentClassification, ContentClassifier};
 use crate::analysis::musical::{MusicalAnalysis, MusicalAnalyzer};
 use crate::analysis::perceptual::{calculate_perceptual_metrics, PerceptualMetrics};
+use crate::analysis::quality::{QualityAnalyzer, QualityAssessment};
 use crate::analysis::spectral::{StftProcessor, WindowFunction};
 use crate::analysis::temporal::{BeatTracker, OnsetDetector};
 use crate::audio::AudioFile;
@@ -19,6 +20,7 @@ pub struct AnalysisResult {
     pub perceptual: PerceptualMetrics,
     pub classification: ContentClassification,
     pub musical: MusicalAnalysis,
+    pub quality: QualityAssessment,
     pub visuals: VisualsData,
     pub insights: Vec<String>,
     pub recommendations: Vec<String>,
@@ -354,6 +356,10 @@ impl AnalysisEngine {
         let musical_analyzer = MusicalAnalyzer::new(audio.buffer.sample_rate as f32);
         let musical = musical_analyzer.analyze(&mono)?;
 
+        // Assess audio quality
+        let quality_analyzer = QualityAnalyzer::new(audio.buffer.sample_rate as f32);
+        let quality = quality_analyzer.analyze(&mono)?;
+
         // Add musical insights
         insights.push(format!(
             "Key: {} (confidence: {:.0}%)",
@@ -384,6 +390,19 @@ impl AnalysisEngine {
                 }
             }
         }
+
+        // Add quality insights
+        insights.push(format!(
+            "Audio quality score: {:.0}%",
+            quality.overall_score * 100.0
+        ));
+
+        for issue in quality.issues.iter().take(3) {
+            insights.push(format!("Quality issue: {}", issue.description));
+        }
+
+        // Add quality recommendations
+        recommendations.extend(quality.recommendations.clone());
 
         // Add perceptual insights
         if perceptual.loudness_lufs < -23.0 {
@@ -454,6 +473,7 @@ impl AnalysisEngine {
             perceptual,
             classification,
             musical,
+            quality,
             insights,
             recommendations,
         };

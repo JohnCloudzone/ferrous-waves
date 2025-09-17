@@ -10,6 +10,7 @@ High-fidelity audio analysis bridge for development workflows. Analyze audio fil
 - **Perceptual Metrics**: LUFS loudness measurement (EBU R 128), true peak detection, dynamic range analysis
 - **Content Classification**: Speech/music/silence detection with confidence scores
 - **Musical Analysis**: Key detection with confidence, chord progression, harmonic complexity
+- **Quality Assessment**: SNR, THD, clipping detection, noise floor, and reliability scoring
 - **Visualization**: Waveforms, spectrograms, power curves (base64 encoded)
 - **MCP Integration**: Direct integration with AI assistants via Model Context Protocol
 - **Content-based Caching**: Fast re-analysis with BLAKE3 hashing
@@ -118,7 +119,8 @@ src/
 │   ├── temporal/   # Beat tracking, onset detection
 │   ├── perceptual.rs # LUFS, dynamic range, psychoacoustic metrics
 │   ├── classification.rs # Speech/music/silence detection
-│   └── musical.rs  # Key detection, chord progression, harmonic analysis
+│   ├── musical.rs  # Key detection, chord progression, harmonic analysis
+│   └── quality.rs  # Audio quality assessment and issue detection
 ├── visualization/  # Waveform and spectrogram generation
 ├── cache/          # Content-based caching system
 ├── mcp/           # MCP server implementation
