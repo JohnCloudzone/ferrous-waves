@@ -126,23 +126,41 @@ let engine = AnalysisEngine::new().with_cache(cache);
 
 ## Examples
 
-### Tempo Detection
+The `examples/` directory contains runnable demonstrations:
+
+```bash
+# Generate sample audio files
+cargo run --example generate_samples
+
+# Basic analysis
+cargo run --example basic_analysis
+
+# Envelope visualization (creates PNG)
+cargo run --example envelope_visualization
+
+# Onset detection
+cargo run --example onset_detection
+
+# Compare two audio files
+cargo run --example compare_files
+
+# Batch processing
+cargo run --example batch_processing
+```
+
+See [examples/README.md](examples/README.md) for more details.
+
+### Quick Start Example
 ```rust
-let audio = AudioFile::load("dance_track.mp3")?;
+use ferrous_waves::{AudioFile, AnalysisEngine};
+
+let audio = AudioFile::load("song.mp3")?;
 let engine = AnalysisEngine::new();
 let result = engine.analyze(&audio).await?;
 
 if let Some(tempo) = result.temporal.tempo {
     println!("BPM: {:.1}", tempo);
-    println!("Beats at: {:?}", result.temporal.beats);
 }
-```
-
-### Spectral Analysis
-```rust
-let result = engine.analyze(&audio).await?;
-let centroids = &result.spectral.spectral_centroid;
-let flux = &result.spectral.spectral_flux;
 ```
 
 ## Contributing
@@ -152,7 +170,7 @@ Pull requests welcome. Please ensure all tests pass and add tests for new featur
 ```bash
 cargo test
 cargo fmt -- --check
-cargo clippy
+cargo clippy --all-targets --all-features -- -D warnings
 ```
 
 ## License
