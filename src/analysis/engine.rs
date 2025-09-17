@@ -2,6 +2,7 @@ use crate::analysis::classification::{ContentClassification, ContentClassifier};
 use crate::analysis::musical::{MusicalAnalysis, MusicalAnalyzer};
 use crate::analysis::perceptual::{calculate_perceptual_metrics, PerceptualMetrics};
 use crate::analysis::quality::{QualityAnalyzer, QualityAssessment};
+use crate::analysis::segments::{SegmentAnalysis, SegmentAnalyzer};
 use crate::analysis::spectral::{StftProcessor, WindowFunction};
 use crate::analysis::temporal::{BeatTracker, OnsetDetector};
 use crate::audio::AudioFile;
@@ -21,6 +22,7 @@ pub struct AnalysisResult {
     pub classification: ContentClassification,
     pub musical: MusicalAnalysis,
     pub quality: QualityAssessment,
+    pub segments: SegmentAnalysis,
     pub visuals: VisualsData,
     pub insights: Vec<String>,
     pub recommendations: Vec<String>,
@@ -360,6 +362,10 @@ impl AnalysisEngine {
         let quality_analyzer = QualityAnalyzer::new(audio.buffer.sample_rate as f32);
         let quality = quality_analyzer.analyze(&mono)?;
 
+        // Perform segment-based temporal analysis
+        let segment_analyzer = SegmentAnalyzer::new(audio.buffer.sample_rate as f32);
+        let segments = segment_analyzer.analyze(&mono)?;
+
         // Add musical insights
         insights.push(format!(
             "Key: {} (confidence: {:.0}%)",
@@ -403,6 +409,31 @@ impl AnalysisEngine {
 
         // Add quality recommendations
         recommendations.extend(quality.recommendations.clone());
+
+        // Add segment analysis insights
+        insights.push(format!(
+            "Temporal structure: {} sections detected",
+            segments.structure.len()
+        ));
+
+        if segments.temporal_complexity > 0.7 {
+            insights.push("Complex temporal structure with varied sections".to_string());
+        } else if segments.temporal_complexity < 0.3 {
+            insights.push("Simple, repetitive temporal structure".to_string());
+        }
+
+        if !segments.patterns.repetitions.is_empty() {
+            insights.push(format!(
+                "{} repetition patterns found",
+                segments.patterns.repetitions.len()
+            ));
+        }
+
+        if segments.coherence_score > 0.8 {
+            insights.push("High segment coherence - smooth transitions".to_string());
+        } else if segments.coherence_score < 0.5 {
+            insights.push("Low segment coherence - abrupt changes detected".to_string());
+        }
 
         // Add perceptual insights
         if perceptual.loudness_lufs < -23.0 {
@@ -474,6 +505,7 @@ impl AnalysisEngine {
             classification,
             musical,
             quality,
+            segments,
             insights,
             recommendations,
         };

@@ -11,6 +11,7 @@ High-fidelity audio analysis bridge for development workflows. Analyze audio fil
 - **Content Classification**: Speech/music/silence detection with confidence scores
 - **Musical Analysis**: Key detection with confidence, chord progression, harmonic complexity
 - **Quality Assessment**: SNR, THD, clipping detection, noise floor, and reliability scoring
+- **Segment Analysis**: Temporal structure detection, pattern recognition, coherence analysis
 - **Visualization**: Waveforms, spectrograms, power curves (base64 encoded)
 - **MCP Integration**: Direct integration with AI assistants via Model Context Protocol
 - **Content-based Caching**: Fast re-analysis with BLAKE3 hashing
@@ -120,7 +121,8 @@ src/
 │   ├── perceptual.rs # LUFS, dynamic range, psychoacoustic metrics
 │   ├── classification.rs # Speech/music/silence detection
 │   ├── musical.rs  # Key detection, chord progression, harmonic analysis
-│   └── quality.rs  # Audio quality assessment and issue detection
+│   ├── quality.rs  # Audio quality assessment and issue detection
+│   └── segments.rs # Segment-based temporal structure analysis
 ├── visualization/  # Waveform and spectrogram generation
 ├── cache/          # Content-based caching system
 ├── mcp/           # MCP server implementation
