@@ -18,8 +18,14 @@ async fn main() -> Result<()> {
     println!("  File B: {}", comparison.file_b.path);
     println!();
     println!("Differences:");
-    println!("  Duration: {:.3}s", comparison.comparison.duration_difference);
-    println!("  Sample Rate Match: {}", comparison.comparison.sample_rate_match);
+    println!(
+        "  Duration: {:.3}s",
+        comparison.comparison.duration_difference
+    );
+    println!(
+        "  Sample Rate Match: {}",
+        comparison.comparison.sample_rate_match
+    );
 
     if let Some(tempo_diff) = comparison.comparison.tempo_difference {
         println!("  Tempo Difference: {:.1} BPM", tempo_diff);

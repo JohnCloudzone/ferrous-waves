@@ -32,7 +32,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn generate_sine_wave(path: &str, frequency: f32, duration: f32) -> Result<(), Box<dyn std::error::Error>> {
+fn generate_sine_wave(
+    path: &str,
+    frequency: f32,
+    duration: f32,
+) -> Result<(), Box<dyn std::error::Error>> {
     let sample_rate = 44100;
     let num_samples = (sample_rate as f32 * duration) as usize;
     let mut data = Vec::with_capacity(num_samples);

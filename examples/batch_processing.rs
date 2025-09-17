@@ -22,22 +22,19 @@ async fn main() -> Result<()> {
                 println!("Processing: {}", path);
 
                 match AudioFile::load(&path) {
-                    Ok(audio) => {
-                        match engine.analyze(&audio).await {
-                            Ok(result) => {
-                                println!("  {} - Duration: {:.2}s, Tempo: {:?}",
-                                    path,
-                                    result.summary.duration,
-                                    result.temporal.tempo
-                                );
-                                Ok(())
-                            }
-                            Err(e) => {
-                                eprintln!("  {} - Analysis error: {}", path, e);
-                                Err(e)
-                            }
+                    Ok(audio) => match engine.analyze(&audio).await {
+                        Ok(result) => {
+                            println!(
+                                "  {} - Duration: {:.2}s, Tempo: {:?}",
+                                path, result.summary.duration, result.temporal.tempo
+                            );
+                            Ok(())
                         }
-                    }
+                        Err(e) => {
+                            eprintln!("  {} - Analysis error: {}", path, e);
+                            Err(e)
+                        }
+                    },
                     Err(e) => {
                         eprintln!("  {} - Load error: {}", path, e);
                         Err(e)
@@ -52,7 +49,11 @@ async fn main() -> Result<()> {
 
     // Print summary
     let successful = results.iter().filter(|r| r.is_ok()).count();
-    println!("\nProcessed {} files successfully out of {}", successful, results.len());
+    println!(
+        "\nProcessed {} files successfully out of {}",
+        successful,
+        results.len()
+    );
 
     Ok(())
 }

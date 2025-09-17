@@ -1,5 +1,5 @@
-use ferrous_waves::analysis::temporal::onset::OnsetDetector;
 use ferrous_waves::analysis::spectral::{StftProcessor, WindowFunction};
+use ferrous_waves::analysis::temporal::onset::OnsetDetector;
 use ferrous_waves::{AudioFile, Result};
 
 fn main() -> Result<()> {
@@ -10,7 +10,7 @@ fn main() -> Result<()> {
     let mono_samples: Vec<f32> = audio
         .buffer
         .samples
-        .chunks(audio.buffer.channels as usize)
+        .chunks(audio.buffer.channels)
         .map(|chunk| chunk[0])
         .collect();
 

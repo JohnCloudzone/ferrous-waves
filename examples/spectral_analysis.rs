@@ -9,7 +9,7 @@ fn main() -> Result<()> {
     let mono_samples: Vec<f32> = audio
         .buffer
         .samples
-        .chunks(audio.buffer.channels as usize)
+        .chunks(audio.buffer.channels)
         .map(|chunk| chunk[0])
         .collect();
 
@@ -26,14 +26,20 @@ fn main() -> Result<()> {
         .unwrap();
 
     let peak_freq = peak_bin as f32 * sample_rate / 2048.0;
-    println!("Peak frequency: {:.2}Hz (magnitude: {:.3})", peak_freq, peak_mag);
+    println!(
+        "Peak frequency: {:.2}Hz (magnitude: {:.3})",
+        peak_freq, peak_mag
+    );
 
     // Perform STFT for time-frequency analysis
     let stft = StftProcessor::new(2048, 512, WindowFunction::Hann);
     let spectrogram = stft.process(&mono_samples);
 
-    println!("Spectrogram shape: {} frequency bins x {} time frames",
-             spectrogram.shape()[0], spectrogram.shape()[1]);
+    println!(
+        "Spectrogram shape: {} frequency bins x {} time frames",
+        spectrogram.shape()[0],
+        spectrogram.shape()[1]
+    );
 
     Ok(())
 }

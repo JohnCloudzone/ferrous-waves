@@ -35,8 +35,14 @@ async fn main() -> Result<()> {
     let stats = cache.stats();
     println!("\nCache Statistics:");
     println!("  Entries: {}", stats.total_entries);
-    println!("  Size: {:.2}MB", stats.total_size_bytes as f64 / 1_048_576.0);
-    println!("  Speedup: {:.1}x", first_time.as_secs_f32() / second_time.as_secs_f32());
+    println!(
+        "  Size: {:.2}MB",
+        stats.total_size_bytes as f64 / 1_048_576.0
+    );
+    println!(
+        "  Speedup: {:.1}x",
+        first_time.as_secs_f32() / second_time.as_secs_f32()
+    );
 
     Ok(())
 }

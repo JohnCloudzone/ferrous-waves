@@ -16,7 +16,10 @@ fn main() {
         }
     });
     println!("1. Analyze Audio:");
-    println!("{}", serde_json::to_string_pretty(&analyze_request).unwrap());
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&analyze_request).unwrap()
+    );
     println!();
 
     // Example 2: Compare two audio files
@@ -28,7 +31,10 @@ fn main() {
         }
     });
     println!("2. Compare Audio:");
-    println!("{}", serde_json::to_string_pretty(&compare_request).unwrap());
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&compare_request).unwrap()
+    );
     println!();
 
     // Example 3: Check job status
