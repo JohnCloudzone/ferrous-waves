@@ -27,6 +27,7 @@ This creates a `samples/` directory with test WAV files including sine waves, ch
 - **cached_analysis.rs** - Using the cache system for faster repeated analysis
 - **batch_processing.rs** - Process multiple files in parallel
 - **envelope_visualization.rs** - Generate waveform visualization with peak and RMS envelopes
+- **cpu_features.rs** - Display detected CPU SIMD capabilities and test performance
 - **generate_samples.rs** - Generate test WAV files for the examples
 
 ## Running Examples
@@ -47,6 +48,7 @@ cargo run --example fingerprint_similarity
 cargo run --example cached_analysis
 cargo run --example batch_processing
 cargo run --example envelope_visualization
+cargo run --example cpu_features
 ```
 
 The `envelope_visualization` example creates a PNG image showing waveform with peak and RMS envelopes.

@@ -171,7 +171,9 @@ let engine = AnalysisEngine::new().with_cache(cache);
 
 ## Performance
 
-- SIMD-optimized FFT operations via rustfft
+- SIMD-accelerated FFT operations (2-3x faster) with automatic CPU feature detection
+- Vectorized window functions and spectrum calculations (5-40x faster)
+- Runtime selection of optimal SIMD instructions (SSE2/AVX/AVX2/AVX-512/NEON)
 - Parallel processing for batch operations
 - Content-based caching reduces re-analysis time
 - Async I/O for non-blocking operations
