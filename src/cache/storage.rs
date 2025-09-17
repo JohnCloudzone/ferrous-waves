@@ -1,5 +1,6 @@
 use dashmap::DashMap;
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::time::{SystemTime, Duration};
 use serde::{Serialize, Deserialize};
 use blake3::Hasher;
@@ -16,7 +17,7 @@ pub struct CacheEntry {
 
 #[derive(Clone)]
 pub struct Cache {
-    entries: DashMap<String, CacheEntry>,
+    entries: Arc<DashMap<String, CacheEntry>>,
     directory: PathBuf,
     max_size_bytes: usize,
     ttl: Duration,
@@ -35,7 +36,7 @@ impl Cache {
         std::fs::create_dir_all(&directory).ok();
 
         Self {
-            entries: DashMap::new(),
+            entries: Arc::new(DashMap::new()),
             directory,
             max_size_bytes,
             ttl,
@@ -92,6 +93,8 @@ impl Cache {
     }
 
     fn save_to_disk(&self, key: &str, data: &[u8]) -> Result<()> {
+        // Ensure directory exists
+        std::fs::create_dir_all(&self.directory)?;
         let path = self.directory.join(format!("{}.cache", key));
         std::fs::write(path, data)?;
         Ok(())

@@ -29,7 +29,7 @@ impl AnalysisEngine {
             fft_size: 2048,
             hop_size: 512,
             window_function: WindowFunction::Hann,
-            cache: Some(Cache::new()),
+            cache: Some(Cache::new()),  // Create a cache by default
         }
     }
 
@@ -38,7 +38,7 @@ impl AnalysisEngine {
             fft_size,
             hop_size,
             window_function,
-            cache: Some(Cache::new()),
+            cache: Some(Cache::new()),  // Create a cache by default
         }
     }
 
