@@ -3,7 +3,7 @@ use std::process::Command;
 #[test]
 fn test_cli_help() {
     let output = Command::new("cargo")
-        .args(&["run", "--bin", "ferrous-waves", "--", "--help"])
+        .args(["run", "--bin", "ferrous-waves", "--", "--help"])
         .output()
         .expect("Failed to execute command");
 
@@ -18,7 +18,7 @@ fn test_cli_help() {
 #[test]
 fn test_cli_version() {
     let output = Command::new("cargo")
-        .args(&["run", "--bin", "ferrous-waves", "--", "--version"])
+        .args(["run", "--bin", "ferrous-waves", "--", "--version"])
         .output()
         .expect("Failed to execute command");
 
@@ -30,7 +30,7 @@ fn test_cli_version() {
 #[test]
 fn test_cache_stats_command() {
     let output = Command::new("cargo")
-        .args(&["run", "--bin", "ferrous-waves", "--", "cache-stats"])
+        .args(["run", "--bin", "ferrous-waves", "--", "cache-stats"])
         .output()
         .expect("Failed to execute command");
 
@@ -44,7 +44,7 @@ fn test_cache_stats_command() {
 #[test]
 fn test_clear_cache_without_confirm() {
     let output = Command::new("cargo")
-        .args(&["run", "--bin", "ferrous-waves", "--", "clear-cache"])
+        .args(["run", "--bin", "ferrous-waves", "--", "clear-cache"])
         .output()
         .expect("Failed to execute command");
 
@@ -56,7 +56,7 @@ fn test_clear_cache_without_confirm() {
 #[test]
 fn test_analyze_help() {
     let output = Command::new("cargo")
-        .args(&["run", "--bin", "ferrous-waves", "--", "analyze", "--help"])
+        .args(["run", "--bin", "ferrous-waves", "--", "analyze", "--help"])
         .output()
         .expect("Failed to execute command");
 
@@ -70,7 +70,7 @@ fn test_analyze_help() {
 #[test]
 fn test_tempo_help() {
     let output = Command::new("cargo")
-        .args(&["run", "--bin", "ferrous-waves", "--", "tempo", "--help"])
+        .args(["run", "--bin", "ferrous-waves", "--", "tempo", "--help"])
         .output()
         .expect("Failed to execute command");
 

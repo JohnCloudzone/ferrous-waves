@@ -1,4 +1,4 @@
-use ferrous_waves::analysis::temporal::{OnsetDetector, BeatTracker};
+use ferrous_waves::analysis::temporal::{BeatTracker, OnsetDetector};
 
 #[test]
 fn test_onset_detector_creation() {
@@ -38,7 +38,10 @@ fn test_onset_detection_impulses() {
     let has_first = frame_indices.iter().any(|&i| (i as i32 - 10).abs() < 3);
     let has_second = frame_indices.iter().any(|&i| (i as i32 - 30).abs() < 3);
 
-    assert!(has_first || has_second, "Should detect at least one major peak");
+    assert!(
+        has_first || has_second,
+        "Should detect at least one major peak"
+    );
 }
 
 #[test]
@@ -58,10 +61,7 @@ fn test_onset_detection_regular_beats() {
 
     // Check regularity of detected onsets
     if onsets.len() >= 2 {
-        let intervals: Vec<f32> = onsets
-            .windows(2)
-            .map(|w| w[1] - w[0])
-            .collect();
+        let intervals: Vec<f32> = onsets.windows(2).map(|w| w[1] - w[0]).collect();
 
         // Intervals should be relatively consistent
         let mean_interval = intervals.iter().sum::<f32>() / intervals.len() as f32;
@@ -98,7 +98,11 @@ fn test_tempo_estimation_regular_beats() {
 
     assert!(tempo.is_some());
     let bpm = tempo.unwrap();
-    assert!((bpm - 120.0).abs() < 5.0, "Should detect ~120 BPM, got {}", bpm);
+    assert!(
+        (bpm - 120.0).abs() < 5.0,
+        "Should detect ~120 BPM, got {}",
+        bpm
+    );
 }
 
 #[test]
@@ -128,9 +132,7 @@ fn test_beat_tracking_alignment() {
     let tracker = BeatTracker::new();
 
     // Create onsets with slight variations around 120 BPM
-    let onsets = vec![
-        0.0, 0.48, 1.02, 1.49, 2.01, 2.52, 2.98, 3.51, 4.0
-    ];
+    let onsets = vec![0.0, 0.48, 1.02, 1.49, 2.01, 2.52, 2.98, 3.51, 4.0];
 
     let beats = tracker.track_beats(&onsets, 120.0);
 
@@ -138,13 +140,13 @@ fn test_beat_tracking_alignment() {
 
     // Beat period for 120 BPM is 0.5 seconds
     if beats.len() >= 2 {
-        let intervals: Vec<f32> = beats
-            .windows(2)
-            .map(|w| w[1] - w[0])
-            .collect();
+        let intervals: Vec<f32> = beats.windows(2).map(|w| w[1] - w[0]).collect();
 
         for interval in intervals {
-            assert!((interval - 0.5).abs() < 0.01, "Beat intervals should be ~0.5s");
+            assert!(
+                (interval - 0.5).abs() < 0.01,
+                "Beat intervals should be ~0.5s"
+            );
         }
     }
 }

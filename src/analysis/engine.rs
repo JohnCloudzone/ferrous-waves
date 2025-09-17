@@ -1,11 +1,13 @@
-use crate::audio::AudioFile;
 use crate::analysis::spectral::{StftProcessor, WindowFunction};
-use crate::analysis::temporal::{OnsetDetector, BeatTracker};
-use crate::mcp::tools::{AnalysisResult, AudioSummary, SpectralAnalysis, TemporalAnalysis, VisualsData};
-use crate::visualization::{Renderer, RenderData};
-use crate::cache::{Cache, generate_cache_key};
+use crate::analysis::temporal::{BeatTracker, OnsetDetector};
+use crate::audio::AudioFile;
+use crate::cache::{generate_cache_key, Cache};
+use crate::mcp::tools::{
+    AnalysisResult, AudioSummary, SpectralAnalysis, TemporalAnalysis, VisualsData,
+};
 use crate::utils::error::Result;
-use serde::{Serialize, Deserialize};
+use crate::visualization::{RenderData, Renderer};
+use serde::{Deserialize, Serialize};
 use std::path::Path;
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -29,7 +31,7 @@ impl AnalysisEngine {
             fft_size: 2048,
             hop_size: 512,
             window_function: WindowFunction::Hann,
-            cache: Some(Cache::new()),  // Create a cache by default
+            cache: Some(Cache::new()), // Create a cache by default
         }
     }
 
@@ -38,7 +40,7 @@ impl AnalysisEngine {
             fft_size,
             hop_size,
             window_function,
-            cache: Some(Cache::new()),  // Create a cache by default
+            cache: Some(Cache::new()), // Create a cache by default
         }
     }
 
@@ -75,14 +77,9 @@ impl AnalysisEngine {
         let mono = audio.buffer.to_mono();
 
         // Calculate basic metrics
-        let peak_amplitude = mono.iter()
-            .map(|s| s.abs())
-            .fold(0.0f32, |a, b| a.max(b));
+        let peak_amplitude = mono.iter().map(|s| s.abs()).fold(0.0f32, |a, b| a.max(b));
 
-        let rms_level = (mono.iter()
-            .map(|s| s * s)
-            .sum::<f32>() / mono.len() as f32)
-            .sqrt();
+        let rms_level = (mono.iter().map(|s| s * s).sum::<f32>() / mono.len() as f32).sqrt();
 
         let dynamic_range = if rms_level > 0.0 {
             20.0 * (peak_amplitude / rms_level).log10()
@@ -130,7 +127,8 @@ impl AnalysisEngine {
             // Spectral flux
             if frame_idx > 0 {
                 let prev_frame = spectrogram.column(frame_idx - 1);
-                let flux: f32 = frame.iter()
+                let flux: f32 = frame
+                    .iter()
                     .zip(prev_frame.iter())
                     .map(|(&curr, &prev)| (curr - prev).max(0.0).powi(2))
                     .sum();
@@ -140,22 +138,24 @@ impl AnalysisEngine {
 
         // Temporal analysis
         let onset_detector = OnsetDetector::new();
-        let onsets = onset_detector.detect_onsets(&spectral_flux, self.hop_size, audio.buffer.sample_rate);
+        let onsets =
+            onset_detector.detect_onsets(&spectral_flux, self.hop_size, audio.buffer.sample_rate);
 
         let beat_tracker = BeatTracker::new();
         let tempo = beat_tracker.estimate_tempo(&onsets);
-        let beats = tempo.map(|t| beat_tracker.track_beats(&onsets, t))
+        let beats = tempo
+            .map(|t| beat_tracker.track_beats(&onsets, t))
             .unwrap_or_default();
 
         // Calculate tempo stability
         let tempo_stability = if beats.len() > 2 {
-            let intervals: Vec<f32> = beats.windows(2)
-                .map(|w| w[1] - w[0])
-                .collect();
+            let intervals: Vec<f32> = beats.windows(2).map(|w| w[1] - w[0]).collect();
             let mean_interval = intervals.iter().sum::<f32>() / intervals.len() as f32;
-            let variance = intervals.iter()
+            let variance = intervals
+                .iter()
                 .map(|&i| (i - mean_interval).powi(2))
-                .sum::<f32>() / intervals.len() as f32;
+                .sum::<f32>()
+                / intervals.len() as f32;
             1.0 / (1.0 + variance.sqrt())
         } else {
             0.0
@@ -165,7 +165,9 @@ impl AnalysisEngine {
         let renderer = Renderer::new(1920, 600);
 
         let waveform_base64 = renderer.render_to_base64(&RenderData::Waveform(&mono)).ok();
-        let spectrogram_base64 = renderer.render_to_base64(&RenderData::Spectrogram(&spectrogram)).ok();
+        let spectrogram_base64 = renderer
+            .render_to_base64(&RenderData::Spectrogram(&spectrogram))
+            .ok();
 
         // Calculate power curve for visualization
         let power_curve: Vec<f32> = (0..spectrogram.shape()[1])
@@ -175,7 +177,9 @@ impl AnalysisEngine {
             })
             .collect();
 
-        let power_curve_base64 = renderer.render_to_base64(&RenderData::PowerCurve(&power_curve)).ok();
+        let power_curve_base64 = renderer
+            .render_to_base64(&RenderData::PowerCurve(&power_curve))
+            .ok();
 
         // Generate insights
         let mut insights = Vec::new();
@@ -189,7 +193,8 @@ impl AnalysisEngine {
         if let Some(t) = tempo {
             insights.push(format!("Detected tempo: {:.1} BPM", t));
             if t < 80.0 {
-                insights.push("Slow tempo detected, suitable for ambient or relaxation".to_string());
+                insights
+                    .push("Slow tempo detected, suitable for ambient or relaxation".to_string());
             } else if t > 140.0 {
                 insights.push("Fast tempo detected, suitable for energetic content".to_string());
             }
@@ -197,7 +202,8 @@ impl AnalysisEngine {
 
         if dynamic_range < 6.0 {
             insights.push("Low dynamic range detected".to_string());
-            recommendations.push("Consider applying less compression for more dynamic sound".to_string());
+            recommendations
+                .push("Consider applying less compression for more dynamic sound".to_string());
         } else if dynamic_range > 20.0 {
             insights.push("High dynamic range preserved".to_string());
         }
@@ -263,12 +269,10 @@ impl AnalysisEngine {
         let analysis_b = self.analyze(audio_b).await.ok();
 
         let tempo_difference = match (&analysis_a, &analysis_b) {
-            (Some(a), Some(b)) => {
-                match (a.temporal.tempo, b.temporal.tempo) {
-                    (Some(ta), Some(tb)) => Some(ta - tb),
-                    _ => None,
-                }
-            }
+            (Some(a), Some(b)) => match (a.temporal.tempo, b.temporal.tempo) {
+                (Some(ta), Some(tb)) => Some(ta - tb),
+                _ => None,
+            },
             _ => None,
         };
 

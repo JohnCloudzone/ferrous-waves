@@ -1,19 +1,19 @@
+use dashmap::DashMap;
 use rmcp::{
     model::{ErrorData as McpError, *},
-    RoleServer, ServerHandler,
     service::RequestContext,
-    ServiceExt, transport::stdio,
+    transport::stdio,
+    RoleServer, ServerHandler, ServiceExt,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::sync::Arc;
 use std::borrow::Cow;
+use std::sync::Arc;
 use uuid::Uuid;
-use dashmap::DashMap;
 
 use crate::audio::AudioFile;
-use crate::AnalysisEngine;
 use crate::cache::Cache;
+use crate::AnalysisEngine;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnalyzeAudioParams {
@@ -79,7 +79,10 @@ impl FerrousWavesMcp {
         }
     }
 
-    async fn analyze_audio_impl(&self, params: AnalyzeAudioParams) -> Result<serde_json::Value, McpError> {
+    async fn analyze_audio_impl(
+        &self,
+        params: AnalyzeAudioParams,
+    ) -> Result<serde_json::Value, McpError> {
         let job_id = Uuid::new_v4().to_string();
 
         // Start job
@@ -104,7 +107,10 @@ impl FerrousWavesMcp {
         }
 
         // Use AnalysisEngine for comprehensive analysis
-        let analysis_result = self.engine.analyze(&audio).await
+        let analysis_result = self
+            .engine
+            .analyze(&audio)
+            .await
             .map_err(|e| McpError::internal_error(format!("Analysis failed: {}", e), None))?;
 
         // Update progress
@@ -136,7 +142,10 @@ impl FerrousWavesMcp {
         Ok(response_data)
     }
 
-    async fn compare_audio_impl(&self, params: CompareAudioParams) -> Result<serde_json::Value, McpError> {
+    async fn compare_audio_impl(
+        &self,
+        params: CompareAudioParams,
+    ) -> Result<serde_json::Value, McpError> {
         // Load both audio files
         let audio_a = AudioFile::load(&params.file_a)
             .map_err(|e| McpError::internal_error(format!("Failed to load file A: {}", e), None))?;
@@ -151,7 +160,10 @@ impl FerrousWavesMcp {
             .unwrap_or_else(|_| json!({"error": "Failed to serialize comparison"})))
     }
 
-    async fn get_job_status_impl(&self, params: serde_json::Value) -> Result<serde_json::Value, McpError> {
+    async fn get_job_status_impl(
+        &self,
+        params: serde_json::Value,
+    ) -> Result<serde_json::Value, McpError> {
         let job_id = params
             .get("job_id")
             .and_then(|v| v.as_str())
@@ -167,11 +179,13 @@ impl FerrousWavesMcp {
     }
 
     pub async fn start(self) -> crate::utils::error::Result<()> {
-        let service = self.serve(stdio()).await
-            .map_err(|e| crate::utils::error::FerrousError::Mcp(format!("Failed to start MCP server: {}", e)))?;
+        let service = self.serve(stdio()).await.map_err(|e| {
+            crate::utils::error::FerrousError::Mcp(format!("Failed to start MCP server: {}", e))
+        })?;
 
-        service.waiting().await
-            .map_err(|e| crate::utils::error::FerrousError::Mcp(format!("MCP server error: {}", e)))?;
+        service.waiting().await.map_err(|e| {
+            crate::utils::error::FerrousError::Mcp(format!("MCP server error: {}", e))
+        })?;
 
         Ok(())
     }
@@ -276,26 +290,22 @@ impl ServerHandler for FerrousWavesMcp {
             tools: vec![
                 Tool {
                     name: Cow::Borrowed("analyze_audio"),
-                    description: Some(Cow::Borrowed("Analyze an audio file and return comprehensive metrics")),
-                    input_schema: Arc::new(
-                        analyze_audio_schema.as_object().unwrap().clone()
-                    ),
+                    description: Some(Cow::Borrowed(
+                        "Analyze an audio file and return comprehensive metrics",
+                    )),
+                    input_schema: Arc::new(analyze_audio_schema.as_object().unwrap().clone()),
                     annotations: None,
                 },
                 Tool {
                     name: Cow::Borrowed("compare_audio"),
                     description: Some(Cow::Borrowed("Compare two audio files")),
-                    input_schema: Arc::new(
-                        compare_audio_schema.as_object().unwrap().clone()
-                    ),
+                    input_schema: Arc::new(compare_audio_schema.as_object().unwrap().clone()),
                     annotations: None,
                 },
                 Tool {
                     name: Cow::Borrowed("get_job_status"),
                     description: Some(Cow::Borrowed("Get the status of an analysis job")),
-                    input_schema: Arc::new(
-                        get_job_status_schema.as_object().unwrap().clone()
-                    ),
+                    input_schema: Arc::new(get_job_status_schema.as_object().unwrap().clone()),
                     annotations: None,
                 },
             ],
@@ -309,12 +319,14 @@ impl ServerHandler for FerrousWavesMcp {
         _context: RequestContext<RoleServer>,
     ) -> std::result::Result<CallToolResult, McpError> {
         let tool_name = request.name.as_ref();
-        let arguments = request.arguments.unwrap_or_else(|| serde_json::Map::new());
+        let arguments = request.arguments.unwrap_or_default();
 
         match tool_name {
             "analyze_audio" => {
-                let params: AnalyzeAudioParams = serde_json::from_value(serde_json::Value::Object(arguments))
-                    .map_err(|e| McpError::invalid_params(format!("Invalid parameters: {}", e), None))?;
+                let params: AnalyzeAudioParams =
+                    serde_json::from_value(serde_json::Value::Object(arguments)).map_err(|e| {
+                        McpError::invalid_params(format!("Invalid parameters: {}", e), None)
+                    })?;
 
                 match self.analyze_audio_impl(params).await {
                     Ok(result) => Ok(CallToolResult {
@@ -328,8 +340,10 @@ impl ServerHandler for FerrousWavesMcp {
                 }
             }
             "compare_audio" => {
-                let params: CompareAudioParams = serde_json::from_value(serde_json::Value::Object(arguments))
-                    .map_err(|e| McpError::invalid_params(format!("Invalid parameters: {}", e), None))?;
+                let params: CompareAudioParams =
+                    serde_json::from_value(serde_json::Value::Object(arguments)).map_err(|e| {
+                        McpError::invalid_params(format!("Invalid parameters: {}", e), None)
+                    })?;
 
                 match self.compare_audio_impl(params).await {
                     Ok(result) => Ok(CallToolResult {
@@ -343,7 +357,10 @@ impl ServerHandler for FerrousWavesMcp {
                 }
             }
             "get_job_status" => {
-                match self.get_job_status_impl(serde_json::Value::Object(arguments)).await {
+                match self
+                    .get_job_status_impl(serde_json::Value::Object(arguments))
+                    .await
+                {
                     Ok(result) => Ok(CallToolResult {
                         is_error: Some(false),
                         content: vec![Content::text(result.to_string())],

@@ -1,12 +1,12 @@
-use crate::{AnalysisEngine, AudioFile};
-use crate::cache::Cache;
 use crate::analysis::spectral::WindowFunction;
+use crate::cache::Cache;
 use crate::mcp::server::FerrousWavesMcp;
 use crate::utils::error::Result;
-use std::path::PathBuf;
-use std::fs;
-use glob::glob;
+use crate::{AnalysisEngine, AudioFile};
 use futures::stream::{self, StreamExt};
+use glob::glob;
+use std::fs;
+use std::path::PathBuf;
 
 pub async fn run_serve(port: u16, host: String, cache_enabled: bool) -> Result<()> {
     println!("Starting Ferrous Waves MCP server on {}:{}...", host, port);
@@ -66,11 +66,17 @@ pub async fn run_analyze(
 
             if let Some(tempo) = result.temporal.tempo {
                 println!("\nTempo: {:.1} BPM", tempo);
-                println!("Tempo Stability: {:.1}%", result.temporal.tempo_stability * 100.0);
+                println!(
+                    "Tempo Stability: {:.1}%",
+                    result.temporal.tempo_stability * 100.0
+                );
             }
 
             println!("Onsets Detected: {}", result.temporal.onsets.len());
-            println!("Rhythmic Complexity: {:.2}", result.temporal.rhythmic_complexity);
+            println!(
+                "Rhythmic Complexity: {:.2}",
+                result.temporal.rhythmic_complexity
+            );
 
             if !result.insights.is_empty() {
                 println!("\nInsights:");
@@ -93,21 +99,24 @@ pub async fn run_analyze(
                 // Save visualizations from base64
                 if let Some(waveform) = result.visuals.waveform {
                     use base64::Engine;
-                    let data = base64::engine::general_purpose::STANDARD.decode(waveform)
+                    let data = base64::engine::general_purpose::STANDARD
+                        .decode(waveform)
                         .map_err(|e| crate::utils::error::FerrousError::Analysis(e.to_string()))?;
                     fs::write(output_path.join("waveform.png"), data)?;
                 }
 
                 if let Some(spectrogram) = result.visuals.spectrogram {
                     use base64::Engine;
-                    let data = base64::engine::general_purpose::STANDARD.decode(spectrogram)
+                    let data = base64::engine::general_purpose::STANDARD
+                        .decode(spectrogram)
                         .map_err(|e| crate::utils::error::FerrousError::Analysis(e.to_string()))?;
                     fs::write(output_path.join("spectrogram.png"), data)?;
                 }
 
                 if let Some(power_curve) = result.visuals.power_curve {
                     use base64::Engine;
-                    let data = base64::engine::general_purpose::STANDARD.decode(power_curve)
+                    let data = base64::engine::general_purpose::STANDARD
+                        .decode(power_curve)
                         .map_err(|e| crate::utils::error::FerrousError::Analysis(e.to_string()))?;
                     fs::write(output_path.join("power_curve.png"), data)?;
                 }
@@ -160,8 +169,14 @@ pub async fn run_compare(file_a: PathBuf, file_b: PathBuf, format: String) -> Re
             }
 
             println!("\nComparison:");
-            println!("  Duration Difference: {:.2}s", comparison.comparison.duration_difference);
-            println!("  Sample Rate Match: {}", comparison.comparison.sample_rate_match);
+            println!(
+                "  Duration Difference: {:.2}s",
+                comparison.comparison.duration_difference
+            );
+            println!(
+                "  Sample Rate Match: {}",
+                comparison.comparison.sample_rate_match
+            );
             if let Some(tempo_diff) = comparison.comparison.tempo_difference {
                 println!("  Tempo Difference: {:.1} BPM", tempo_diff);
             }
@@ -184,13 +199,17 @@ pub async fn run_tempo(file: PathBuf, show_beats: bool) -> Result<()> {
 
     if let Some(tempo) = result.temporal.tempo {
         println!("Tempo: {:.1} BPM", tempo);
-        println!("Tempo Stability: {:.1}%", result.temporal.tempo_stability * 100.0);
+        println!(
+            "Tempo Stability: {:.1}%",
+            result.temporal.tempo_stability * 100.0
+        );
 
         if show_beats {
             println!("\nBeat positions (seconds):");
             for (i, beat) in result.temporal.beats.iter().enumerate() {
                 println!("  Beat {}: {:.3}s", i + 1, beat);
-                if i >= 19 {  // Show first 20 beats
+                if i >= 19 {
+                    // Show first 20 beats
                     println!("  ... ({} more beats)", result.temporal.beats.len() - 20);
                     break;
                 }
@@ -223,11 +242,12 @@ pub async fn run_onsets(file: PathBuf, format: String) -> Result<()> {
                 println!("{:.6}", onset);
             }
         }
-        "text" | _ => {
+        _ => {
             println!("Found {} onsets:", onsets.len());
             for (i, onset) in onsets.iter().enumerate() {
                 println!("  Onset {}: {:.3}s", i + 1, onset);
-                if i >= 49 {  // Show first 50 onsets
+                if i >= 49 {
+                    // Show first 50 onsets
                     println!("  ... ({} more onsets)", onsets.len() - 50);
                     break;
                 }
@@ -248,7 +268,9 @@ pub async fn run_batch(
 
     let search_pattern = directory.join(&pattern);
     let paths: Vec<PathBuf> = glob(search_pattern.to_str().unwrap())
-        .map_err(|e| crate::utils::error::FerrousError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?
+        .map_err(|e| {
+            crate::utils::error::FerrousError::Io(std::io::Error::other(e))
+        })?
         .filter_map(|r| r.ok())
         .collect();
 
@@ -264,24 +286,23 @@ pub async fn run_batch(
             let output_dir = output_dir.clone();
             async move {
                 match AudioFile::load(&path) {
-                    Ok(audio) => {
-                        match engine.analyze(&audio).await {
-                            Ok(result) => {
-                                let file_stem = path.file_stem()
-                                    .and_then(|s| s.to_str())
-                                    .unwrap_or("unknown");
-                                let json_path = output_dir.join(format!("{}.json", file_stem));
-                                let json = serde_json::to_string_pretty(&result)?;
-                                fs::write(json_path, json)?;
-                                println!("✓ Analyzed: {}", path.display());
-                                Ok::<_, crate::utils::error::FerrousError>(())
-                            }
-                            Err(e) => {
-                                println!("✗ Failed to analyze {}: {}", path.display(), e);
-                                Ok(())
-                            }
+                    Ok(audio) => match engine.analyze(&audio).await {
+                        Ok(result) => {
+                            let file_stem = path
+                                .file_stem()
+                                .and_then(|s| s.to_str())
+                                .unwrap_or("unknown");
+                            let json_path = output_dir.join(format!("{}.json", file_stem));
+                            let json = serde_json::to_string_pretty(&result)?;
+                            fs::write(json_path, json)?;
+                            println!("✓ Analyzed: {}", path.display());
+                            Ok::<_, crate::utils::error::FerrousError>(())
                         }
-                    }
+                        Err(e) => {
+                            println!("✗ Failed to analyze {}: {}", path.display(), e);
+                            Ok(())
+                        }
+                    },
                     Err(e) => {
                         println!("✗ Failed to load {}: {}", path.display(), e);
                         Ok(())
@@ -293,7 +314,10 @@ pub async fn run_batch(
         .collect::<Vec<_>>()
         .await;
 
-    println!("\nBatch analysis complete. Results saved to {}", output_dir.display());
+    println!(
+        "\nBatch analysis complete. Results saved to {}",
+        output_dir.display()
+    );
 
     Ok(())
 }
@@ -317,8 +341,14 @@ pub fn run_cache_stats() -> Result<()> {
 
     println!("=== Cache Statistics ===");
     println!("Total Entries: {}", stats.total_entries);
-    println!("Total Size: {:.2} MB", stats.total_size_bytes as f64 / 1_048_576.0);
-    println!("Max Size: {:.2} GB", stats.max_size_bytes as f64 / 1_073_741_824.0);
+    println!(
+        "Total Size: {:.2} MB",
+        stats.total_size_bytes as f64 / 1_048_576.0
+    );
+    println!(
+        "Max Size: {:.2} GB",
+        stats.max_size_bytes as f64 / 1_073_741_824.0
+    );
     println!("Cache Directory: {}", stats.directory.display());
 
     let usage_percent = (stats.total_size_bytes as f64 / stats.max_size_bytes as f64) * 100.0;

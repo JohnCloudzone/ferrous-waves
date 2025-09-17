@@ -1,5 +1,5 @@
-pub mod onset;
 pub mod beat;
+pub mod onset;
 
-pub use onset::OnsetDetector;
 pub use beat::BeatTracker;
+pub use onset::OnsetDetector;

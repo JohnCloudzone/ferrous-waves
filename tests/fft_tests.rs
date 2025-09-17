@@ -18,8 +18,8 @@ fn test_fft_sine_wave_detection() {
     let frequency = 440.0;
     let mut input = vec![0.0; size];
 
-    for i in 0..size {
-        input[i] = (2.0 * PI * frequency * i as f32 / sample_rate).sin();
+    for (i, value) in input.iter_mut().enumerate() {
+        *value = (2.0 * PI * frequency * i as f32 / sample_rate).sin();
     }
 
     let magnitude = processor.magnitude_spectrum(&input);
@@ -140,9 +140,9 @@ fn test_multiple_frequencies() {
 
     // Generate signal with two frequencies: 440Hz and 880Hz
     let mut input = vec![0.0; size];
-    for i in 0..size {
+    for (i, value) in input.iter_mut().enumerate() {
         let t = i as f32 / sample_rate;
-        input[i] = (2.0 * PI * 440.0 * t).sin() + 0.5 * (2.0 * PI * 880.0 * t).sin();
+        *value = (2.0 * PI * 440.0 * t).sin() + 0.5 * (2.0 * PI * 880.0 * t).sin();
     }
 
     let magnitude = processor.magnitude_spectrum(&input);
@@ -150,11 +150,11 @@ fn test_multiple_frequencies() {
     // Find peaks
     let mut peaks = Vec::new();
     for i in 1..magnitude.len() - 1 {
-        if magnitude[i] > magnitude[i - 1] && magnitude[i] > magnitude[i + 1] {
-            if magnitude[i] > 10.0 { // Threshold to filter noise
-                let freq = i as f32 * sample_rate / size as f32;
-                peaks.push(freq);
-            }
+        if magnitude[i] > magnitude[i - 1] && magnitude[i] > magnitude[i + 1]
+            && magnitude[i] > 10.0 {
+            // Threshold to filter noise
+            let freq = i as f32 * sample_rate / size as f32;
+            peaks.push(freq);
         }
     }
 

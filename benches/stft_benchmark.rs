@@ -1,5 +1,5 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
-use ferrous_waves::analysis::spectral::{StftProcessor, WindowFunction, MelFilterBank};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use ferrous_waves::analysis::spectral::{MelFilterBank, StftProcessor, WindowFunction};
 use ndarray::Array2;
 
 fn benchmark_stft_processing(c: &mut Criterion) {

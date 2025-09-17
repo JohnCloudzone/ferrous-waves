@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod visualization_tests {
-    use ferrous_waves::visualization::{Renderer, RenderData};
+    use ferrous_waves::visualization::{RenderData, Renderer};
     use ndarray::Array2;
     use tempfile::tempdir;
 
@@ -76,7 +76,9 @@ mod visualization_tests {
         let base64_str = result.unwrap();
         assert!(!base64_str.is_empty());
         // Base64 should be valid
-        assert!(base64_str.chars().all(|c| c.is_ascii_alphanumeric() || c == '+' || c == '/' || c == '='));
+        assert!(base64_str
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '+' || c == '/' || c == '='));
     }
 
     #[test]

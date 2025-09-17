@@ -1,6 +1,6 @@
 use clap::Parser;
-use ferrous_waves::cli::{Cli, Commands};
 use ferrous_waves::cli::commands;
+use ferrous_waves::cli::{Cli, Commands};
 use ferrous_waves::Result;
 
 #[tokio::main]
@@ -20,9 +20,7 @@ async fn main() -> Result<()> {
         }
     };
 
-    tracing_subscriber::fmt()
-        .with_env_filter(filter)
-        .init();
+    tracing_subscriber::fmt().with_env_filter(filter).init();
 
     let cli = Cli::parse();
 
@@ -41,7 +39,11 @@ async fn main() -> Result<()> {
         } => {
             commands::run_analyze(file, output, format, fft_size, hop_size, no_cache).await?;
         }
-        Commands::Compare { file_a, file_b, format } => {
+        Commands::Compare {
+            file_a,
+            file_b,
+            format,
+        } => {
             commands::run_compare(file_a, file_b, format).await?;
         }
         Commands::Tempo { file, show_beats } => {

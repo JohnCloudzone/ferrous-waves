@@ -1,4 +1,4 @@
-use ndarray::{Array2, s};
+use ndarray::{s, Array2};
 
 pub struct OnsetDetector {
     threshold: f32,
@@ -23,7 +23,7 @@ impl OnsetDetector {
         let num_frames = spectrogram.shape()[1];
         let mut flux = vec![0.0; num_frames];
 
-        for i in 1..num_frames {
+        for (i, flux_value) in flux.iter_mut().enumerate().skip(1).take(num_frames - 1) {
             let prev_frame = spectrogram.slice(s![.., i - 1]);
             let curr_frame = spectrogram.slice(s![.., i]);
 
@@ -32,17 +32,26 @@ impl OnsetDetector {
                 .zip(prev_frame.iter())
                 .map(|(&curr, &prev)| {
                     let d = curr - prev;
-                    if d > 0.0 { d } else { 0.0 }  // Half-wave rectification
+                    if d > 0.0 {
+                        d
+                    } else {
+                        0.0
+                    } // Half-wave rectification
                 })
                 .sum();
 
-            flux[i] = diff;
+            *flux_value = diff;
         }
 
         flux
     }
 
-    pub fn detect_onsets(&self, onset_function: &[f32], hop_size: usize, sample_rate: u32) -> Vec<f32> {
+    pub fn detect_onsets(
+        &self,
+        onset_function: &[f32],
+        hop_size: usize,
+        sample_rate: u32,
+    ) -> Vec<f32> {
         let peaks = self.peak_pick(onset_function);
 
         // Convert frame indices to time
@@ -81,15 +90,15 @@ impl OnsetDetector {
             let mut count = 0;
 
             if pre_end >= pre_start {
-                for j in pre_start..=pre_end {
-                    mean += signal[j];
+                for &value in signal.iter().take(pre_end + 1).skip(pre_start) {
+                    mean += value;
                     count += 1;
                 }
             }
 
             if post_end >= post_start {
-                for j in post_start..=post_end {
-                    mean += signal[j];
+                for &value in signal.iter().take(post_end + 1).skip(post_start) {
+                    mean += value;
                     count += 1;
                 }
             }

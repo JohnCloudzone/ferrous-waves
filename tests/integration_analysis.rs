@@ -1,6 +1,6 @@
-use ferrous_waves::{AudioFile, AnalysisEngine, Result};
 use ferrous_waves::analysis::spectral::WindowFunction;
 use ferrous_waves::cache::Cache;
+use ferrous_waves::{AnalysisEngine, AudioFile, Result};
 use tempfile::TempDir;
 
 #[tokio::test]
@@ -14,9 +14,10 @@ async fn test_analysis_engine_basic() -> Result<()> {
     // Generate a simple sine wave (interleaved stereo)
     let mut data = vec![0.0f32; samples_per_channel * channels];
     for i in 0..samples_per_channel {
-        let sample = (2.0 * std::f32::consts::PI * 440.0 * i as f32 / sample_rate as f32).sin() * 0.5;
-        data[i * channels] = sample;      // Left channel
-        data[i * channels + 1] = sample;  // Right channel
+        let sample =
+            (2.0 * std::f32::consts::PI * 440.0 * i as f32 / sample_rate as f32).sin() * 0.5;
+        data[i * channels] = sample; // Left channel
+        data[i * channels + 1] = sample; // Right channel
     }
 
     // Create audio buffer
@@ -47,7 +48,7 @@ async fn test_analysis_engine_with_cache() -> Result<()> {
     let temp_dir = TempDir::new()?;
     let cache = Cache::with_config(
         temp_dir.path().to_path_buf(),
-        10 * 1024 * 1024, // 10MB max size
+        10 * 1024 * 1024,                     // 10MB max size
         std::time::Duration::from_secs(3600), // 1 hour TTL
     );
 
@@ -57,8 +58,8 @@ async fn test_analysis_engine_with_cache() -> Result<()> {
     let samples = (sample_rate as f32 * duration) as usize;
 
     let mut data = vec![0.0f32; samples];
-    for i in 0..samples {
-        data[i] = (2.0 * std::f32::consts::PI * 220.0 * i as f32 / sample_rate as f32).sin() * 0.3;
+    for (i, value) in data.iter_mut().enumerate() {
+        *value = (2.0 * std::f32::consts::PI * 220.0 * i as f32 / sample_rate as f32).sin() * 0.3;
     }
 
     let buffer = ferrous_waves::audio::AudioBuffer::new(data, sample_rate, 1);
@@ -78,7 +79,10 @@ async fn test_analysis_engine_with_cache() -> Result<()> {
     let result2 = engine.analyze(&audio).await?;
 
     // Results should be identical
-    assert_eq!(result1.summary.peak_amplitude, result2.summary.peak_amplitude);
+    assert_eq!(
+        result1.summary.peak_amplitude,
+        result2.summary.peak_amplitude
+    );
     assert_eq!(result1.summary.rms_level, result2.summary.rms_level);
 
     // Check cache stats
@@ -96,8 +100,9 @@ async fn test_comparison() -> Result<()> {
     let audio_a = {
         let samples = (sample_rate as f32 * 0.5) as usize;
         let mut data = vec![0.0f32; samples];
-        for i in 0..samples {
-            data[i] = (2.0 * std::f32::consts::PI * 440.0 * i as f32 / sample_rate as f32).sin() * 0.5;
+        for (i, value) in data.iter_mut().enumerate() {
+            *value =
+                (2.0 * std::f32::consts::PI * 440.0 * i as f32 / sample_rate as f32).sin() * 0.5;
         }
 
         AudioFile {
@@ -110,8 +115,9 @@ async fn test_comparison() -> Result<()> {
     let audio_b = {
         let samples = (sample_rate as f32 * 1.0) as usize;
         let mut data = vec![0.0f32; samples];
-        for i in 0..samples {
-            data[i] = (2.0 * std::f32::consts::PI * 880.0 * i as f32 / sample_rate as f32).sin() * 0.3;
+        for (i, value) in data.iter_mut().enumerate() {
+            *value =
+                (2.0 * std::f32::consts::PI * 880.0 * i as f32 / sample_rate as f32).sin() * 0.3;
         }
 
         AudioFile {

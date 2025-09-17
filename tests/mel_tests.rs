@@ -23,8 +23,11 @@ fn test_mel_scale_conversion() {
 
 #[test]
 fn test_mel_scale_monotonic() {
-    let frequencies = vec![100.0, 500.0, 1000.0, 2000.0, 5000.0, 10000.0];
-    let mels: Vec<f32> = frequencies.iter().map(|&f| MelFilterBank::hz_to_mel(f)).collect();
+    let frequencies = [100.0, 500.0, 1000.0, 2000.0, 5000.0, 10000.0];
+    let mels: Vec<f32> = frequencies
+        .iter()
+        .map(|&f| MelFilterBank::hz_to_mel(f))
+        .collect();
 
     // Mel scale should be monotonically increasing
     for i in 1..mels.len() {
@@ -39,7 +42,10 @@ fn test_mel_to_hz_inverse() {
     for &freq in &frequencies {
         let mel = MelFilterBank::hz_to_mel(freq);
         let hz_back = MelFilterBank::mel_to_hz(mel);
-        assert!((hz_back - freq).abs() < 0.1, "Conversion should be reversible");
+        assert!(
+            (hz_back - freq).abs() < 0.1,
+            "Conversion should be reversible"
+        );
     }
 }
 
@@ -73,7 +79,10 @@ fn test_filterbank_triangular_filters() {
         let max_val = filter.iter().fold(0.0f32, |a, &b| a.max(b));
 
         // Peak should be close to 1.0 for normalized filters
-        assert!(max_val > 0.5 && max_val <= 1.0, "Filter peak should be normalized");
+        assert!(
+            max_val > 0.5 && max_val <= 1.0,
+            "Filter peak should be normalized"
+        );
 
         // Filter should have non-zero values
         let non_zero_count = filter.iter().filter(|&&x| x > 0.0).count();
@@ -99,7 +108,10 @@ fn test_filterbank_frequency_coverage() {
     // Check last filter extends toward Nyquist
     let last_filter = filters.row(filters.shape()[0] - 1);
     let last_nonzero = last_filter.iter().rposition(|&x| x > 0.0).unwrap_or(0);
-    assert!(last_nonzero > filters.shape()[1] / 2, "Last filter should extend toward Nyquist");
+    assert!(
+        last_nonzero > filters.shape()[1] / 2,
+        "Last filter should extend toward Nyquist"
+    );
 }
 
 #[test]
@@ -125,8 +137,11 @@ fn test_mel_spectrogram_energy_preservation() {
     // Some energy loss is expected due to filter overlap
     // but should be within reasonable bounds
     let energy_ratio = output_energy / input_energy;
-    assert!(energy_ratio > 0.5 && energy_ratio < 1.5,
-            "Energy should be approximately preserved: ratio = {}", energy_ratio);
+    assert!(
+        energy_ratio > 0.5 && energy_ratio < 1.5,
+        "Energy should be approximately preserved: ratio = {}",
+        energy_ratio
+    );
 }
 
 #[test]
@@ -145,8 +160,12 @@ fn test_different_num_filters() {
         let spectrogram = Array2::ones((fft_size / 2 + 1, 10));
         let mel_spec = filterbank.apply(&spectrogram);
 
-        assert_eq!(mel_spec.shape()[0], num_filters,
-                   "Should have {} mel bands", num_filters);
+        assert_eq!(
+            mel_spec.shape()[0],
+            num_filters,
+            "Should have {} mel bands",
+            num_filters
+        );
         assert_eq!(mel_spec.shape()[1], 10, "Time frames should be preserved");
     }
 }

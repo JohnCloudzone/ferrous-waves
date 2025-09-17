@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use ferrous_waves::analysis::spectral::{FftProcessor, WindowFunction};
 
 fn benchmark_fft_sizes(c: &mut Criterion) {
@@ -11,9 +11,7 @@ fn benchmark_fft_sizes(c: &mut Criterion) {
         let input: Vec<f32> = (0..size).map(|i| (i as f32).sin()).collect();
 
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, _| {
-            b.iter(|| {
-                processor.magnitude_spectrum(black_box(&input))
-            });
+            b.iter(|| processor.magnitude_spectrum(black_box(&input)));
         });
     }
 
@@ -64,5 +62,10 @@ fn benchmark_fft_operations(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, benchmark_fft_sizes, benchmark_window_functions, benchmark_fft_operations);
+criterion_group!(
+    benches,
+    benchmark_fft_sizes,
+    benchmark_window_functions,
+    benchmark_fft_operations
+);
 criterion_main!(benches);

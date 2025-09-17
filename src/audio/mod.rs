@@ -2,8 +2,8 @@ pub mod buffer;
 pub mod decoder;
 pub mod formats;
 
-use std::path::Path;
 use crate::utils::error::Result;
+use std::path::Path;
 
 pub use buffer::AudioBuffer;
 pub use decoder::AudioDecoder;
@@ -21,9 +21,10 @@ impl AudioFile {
         let format = AudioFormat::from_path(&path);
 
         if !format.is_supported() {
-            return Err(crate::utils::error::FerrousError::AudioDecode(
-                format!("Unsupported audio format: {:?}", format)
-            ));
+            return Err(crate::utils::error::FerrousError::AudioDecode(format!(
+                "Unsupported audio format: {:?}",
+                format
+            )));
         }
 
         let mut decoder = AudioDecoder::new(&path)?;

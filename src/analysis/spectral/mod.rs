@@ -1,9 +1,9 @@
 pub mod fft;
-pub mod window;
-pub mod stft;
 pub mod mel;
+pub mod stft;
+pub mod window;
 
 pub use fft::FftProcessor;
-pub use window::WindowFunction;
-pub use stft::StftProcessor;
 pub use mel::MelFilterBank;
+pub use stft::StftProcessor;
+pub use window::WindowFunction;

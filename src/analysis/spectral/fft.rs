@@ -1,5 +1,5 @@
-use rustfft::{Fft, FftPlanner};
 use num_complex::Complex;
+use rustfft::{Fft, FftPlanner};
 use std::sync::Arc;
 
 pub struct FftProcessor {
@@ -23,10 +23,7 @@ impl FftProcessor {
     pub fn process(&self, input: &[f32]) -> Vec<Complex<f32>> {
         assert_eq!(input.len(), self.size, "Input size must match FFT size");
 
-        let mut buffer: Vec<Complex<f32>> = input
-            .iter()
-            .map(|&x| Complex::new(x, 0.0))
-            .collect();
+        let mut buffer: Vec<Complex<f32>> = input.iter().map(|&x| Complex::new(x, 0.0)).collect();
 
         self.forward_fft.process(&mut buffer);
         buffer
@@ -36,7 +33,7 @@ impl FftProcessor {
         let complex_output = self.process(input);
         complex_output
             .iter()
-            .take(self.size / 2 + 1)  // Only positive frequencies
+            .take(self.size / 2 + 1) // Only positive frequencies
             .map(|c| c.norm())
             .collect()
     }
@@ -79,8 +76,8 @@ mod tests {
         let frequency = 440.0;
         let mut input = vec![0.0; size];
 
-        for i in 0..size {
-            input[i] = (2.0 * PI * frequency * i as f32 / sample_rate).sin();
+        for (i, value) in input.iter_mut().enumerate() {
+            *value = (2.0 * PI * frequency * i as f32 / sample_rate).sin();
         }
 
         let magnitude = processor.magnitude_spectrum(&input);

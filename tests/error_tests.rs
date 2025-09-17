@@ -1,5 +1,5 @@
-use ferrous_waves::utils::error::{FerrousError, Result};
 use ferrous_waves::audio::{AudioFile, AudioFormat};
+use ferrous_waves::utils::error::{FerrousError, Result};
 use std::io;
 
 #[test]

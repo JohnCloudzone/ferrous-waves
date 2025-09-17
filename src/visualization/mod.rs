@@ -1,5 +1,5 @@
+pub mod renderer;
 pub mod spectrogram;
 pub mod waveform;
-pub mod renderer;
 
-pub use renderer::{Renderer, RenderData};
+pub use renderer::{RenderData, Renderer};

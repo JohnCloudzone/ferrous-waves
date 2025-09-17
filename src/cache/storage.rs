@@ -1,10 +1,10 @@
+use crate::utils::error::{FerrousError, Result};
+use blake3::Hasher;
 use dashmap::DashMap;
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::time::{SystemTime, Duration};
-use serde::{Serialize, Deserialize};
-use blake3::Hasher;
-use crate::utils::error::{Result, FerrousError};
+use std::time::{Duration, SystemTime};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CacheEntry {
@@ -27,8 +27,8 @@ impl Cache {
     pub fn new() -> Self {
         Self::with_config(
             PathBuf::from(".ferrous-waves-cache"),
-            10 * 1024 * 1024 * 1024,  // 10GB
-            Duration::from_secs(24 * 3600),  // 24 hours
+            10 * 1024 * 1024 * 1024,        // 10GB
+            Duration::from_secs(24 * 3600), // 24 hours
         )
     }
 
@@ -110,7 +110,8 @@ impl Cache {
     }
 
     fn evict_lru(&self, needed_space: usize) -> Result<()> {
-        let mut entries: Vec<_> = self.entries
+        let mut entries: Vec<_> = self
+            .entries
             .iter()
             .map(|entry| (entry.key().clone(), entry.accessed_at))
             .collect();
@@ -132,7 +133,7 @@ impl Cache {
 
         if freed_space < needed_space {
             return Err(FerrousError::Cache(
-                "Unable to free enough space in cache".to_string()
+                "Unable to free enough space in cache".to_string(),
             ));
         }
 
@@ -144,11 +145,9 @@ impl Cache {
 
         // Remove all cache files from disk
         if let Ok(entries) = std::fs::read_dir(&self.directory) {
-            for entry in entries {
-                if let Ok(entry) = entry {
-                    if entry.path().extension().and_then(|s| s.to_str()) == Some("cache") {
-                        std::fs::remove_file(entry.path()).ok();
-                    }
+            for entry in entries.flatten() {
+                if entry.path().extension().and_then(|s| s.to_str()) == Some("cache") {
+                    std::fs::remove_file(entry.path()).ok();
                 }
             }
         }

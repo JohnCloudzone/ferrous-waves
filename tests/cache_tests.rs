@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod cache_tests {
-    use ferrous_waves::cache::{Cache, generate_simple_key};
+    use ferrous_waves::cache::{generate_simple_key, Cache};
     use std::time::Duration;
     use tempfile::tempdir;
 
@@ -17,8 +17,8 @@ mod cache_tests {
         let dir = tempdir().unwrap();
         let cache = Cache::with_config(
             dir.path().to_path_buf(),
-            1024 * 1024,  // 1MB
-            Duration::from_secs(3600),  // 1 hour
+            1024 * 1024,               // 1MB
+            Duration::from_secs(3600), // 1 hour
         );
         let stats = cache.stats();
         assert_eq!(stats.max_size_bytes, 1024 * 1024);
@@ -99,14 +99,14 @@ mod cache_tests {
         let dir = tempdir().unwrap();
         let cache = Cache::with_config(
             dir.path().to_path_buf(),
-            1000,  // Very small cache
+            1000, // Very small cache
             Duration::from_secs(3600),
         );
 
         // Add entries that will exceed cache size
         for i in 0..10 {
             let key = format!("key_{}", i);
-            let data = vec![i as u8; 200];  // Each entry is 200 bytes
+            let data = vec![i as u8; 200]; // Each entry is 200 bytes
             cache.put(key, data).ok();
         }
 
@@ -123,7 +123,7 @@ mod cache_tests {
         let cache = Cache::with_config(
             dir.path().to_path_buf(),
             1024 * 1024,
-            Duration::from_millis(100),  // Very short TTL
+            Duration::from_millis(100), // Very short TTL
         );
 
         let key = "ttl_key".to_string();

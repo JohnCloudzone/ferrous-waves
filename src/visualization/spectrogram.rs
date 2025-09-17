@@ -1,13 +1,23 @@
-use crate::visualization::renderer::Renderer;
 use crate::utils::error::Result;
+use crate::visualization::renderer::Renderer;
 use std::path::Path;
 
-pub fn render_spectrogram(spectrogram: &ndarray::Array2<f32>, output_path: &Path, width: u32, height: u32) -> Result<()> {
+pub fn render_spectrogram(
+    spectrogram: &ndarray::Array2<f32>,
+    output_path: &Path,
+    width: u32,
+    height: u32,
+) -> Result<()> {
     let renderer = Renderer::new(width, height);
     renderer.render_spectrogram(spectrogram, output_path, 44100)
 }
 
-pub fn render_mel_spectrogram(mel_spec: &ndarray::Array2<f32>, output_path: &Path, width: u32, height: u32) -> Result<()> {
+pub fn render_mel_spectrogram(
+    mel_spec: &ndarray::Array2<f32>,
+    output_path: &Path,
+    width: u32,
+    height: u32,
+) -> Result<()> {
     // Mel spectrogram is similar but with different frequency scaling
     render_spectrogram(mel_spec, output_path, width, height)
 }

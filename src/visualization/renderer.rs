@@ -1,9 +1,9 @@
+use crate::utils::error::{FerrousError, Result};
+use base64::Engine;
+use image::{ImageBuffer, Rgb};
 use plotters::prelude::*;
 use plotters::series::LineSeries;
-use image::{ImageBuffer, Rgb};
 use std::path::Path;
-use crate::utils::error::{Result, FerrousError};
-use base64::Engine;
 
 pub struct Renderer {
     width: u32,
@@ -12,35 +12,26 @@ pub struct Renderer {
 
 impl Renderer {
     pub fn new(width: u32, height: u32) -> Self {
-        Self {
-            width,
-            height,
-        }
+        Self { width, height }
     }
 
     pub fn with_dimensions(width: u32, height: u32) -> Self {
-        Self {
-            width,
-            height,
-        }
+        Self { width, height }
     }
 
     pub fn render_waveform(&self, samples: &[f32], output_path: &Path) -> Result<()> {
-        let root = BitMapBackend::new(output_path, (self.width, self.height))
-            .into_drawing_area();
+        let root = BitMapBackend::new(output_path, (self.width, self.height)).into_drawing_area();
 
-        root.fill(&WHITE)
-            .map_err(|e| FerrousError::Visualization(format!("Failed to fill background: {}", e)))?;
+        root.fill(&WHITE).map_err(|e| {
+            FerrousError::Visualization(format!("Failed to fill background: {}", e))
+        })?;
 
         let max_val = samples.iter().fold(0.0f32, |a, &b| a.max(b.abs()));
         let y_range = if max_val > 0.0 { max_val * 1.1 } else { 1.0 };
 
         let mut chart = ChartBuilder::on(&root)
             .margin(10)
-            .build_cartesian_2d(
-                0f32..samples.len() as f32,
-                -y_range..y_range,
-            )
+            .build_cartesian_2d(0f32..samples.len() as f32, -y_range..y_range)
             .map_err(|e| FerrousError::Visualization(format!("Failed to build chart: {}", e)))?;
 
         // Downsample if needed for performance
@@ -52,15 +43,17 @@ impl Renderer {
             .map(|(i, &s)| (i as f32 * step as f32, s))
             .collect();
 
-        chart.draw_series(LineSeries::new(points, &BLUE))
+        chart
+            .draw_series(LineSeries::new(points, &BLUE))
             .map_err(|e| FerrousError::Visualization(format!("Failed to draw waveform: {}", e)))?;
 
         // Draw zero line
-        chart.draw_series(LineSeries::new(
-            vec![(0.0, 0.0), (samples.len() as f32, 0.0)],
-            ShapeStyle::from(&BLACK).stroke_width(1),
-        ))
-        .map_err(|e| FerrousError::Visualization(format!("Failed to draw zero line: {}", e)))?;
+        chart
+            .draw_series(LineSeries::new(
+                vec![(0.0, 0.0), (samples.len() as f32, 0.0)],
+                ShapeStyle::from(&BLACK).stroke_width(1),
+            ))
+            .map_err(|e| FerrousError::Visualization(format!("Failed to draw zero line: {}", e)))?;
 
         root.present()
             .map_err(|e| FerrousError::Visualization(format!("Failed to present: {}", e)))?;
@@ -84,7 +77,9 @@ impl Renderer {
 
         // Find min and max for normalization
         let min_db = db_spectrogram.iter().fold(f32::INFINITY, |a, &b| a.min(b));
-        let max_db = db_spectrogram.iter().fold(f32::NEG_INFINITY, |a, &b| a.max(b));
+        let max_db = db_spectrogram
+            .iter()
+            .fold(f32::NEG_INFINITY, |a, &b| a.max(b));
         let db_range = max_db - min_db;
 
         // Calculate scaling factors
@@ -111,28 +106,26 @@ impl Renderer {
         }
 
         // Save the image
-        img.save(output_path)
-            .map_err(|e| FerrousError::Visualization(format!("Failed to save spectrogram: {}", e)))?;
+        img.save(output_path).map_err(|e| {
+            FerrousError::Visualization(format!("Failed to save spectrogram: {}", e))
+        })?;
 
         Ok(())
     }
 
     pub fn render_power_curve(&self, power: &[f32], output_path: &Path) -> Result<()> {
-        let root = BitMapBackend::new(output_path, (self.width, self.height))
-            .into_drawing_area();
+        let root = BitMapBackend::new(output_path, (self.width, self.height)).into_drawing_area();
 
-        root.fill(&WHITE)
-            .map_err(|e| FerrousError::Visualization(format!("Failed to fill background: {}", e)))?;
+        root.fill(&WHITE).map_err(|e| {
+            FerrousError::Visualization(format!("Failed to fill background: {}", e))
+        })?;
 
         let max_power = power.iter().fold(0.0f32, |a, &b| a.max(b));
         let min_power = power.iter().fold(f32::INFINITY, |a, &b| a.min(b));
 
         let mut chart = ChartBuilder::on(&root)
             .margin(10)
-            .build_cartesian_2d(
-                0f32..power.len() as f32,
-                min_power..max_power * 1.1,
-            )
+            .build_cartesian_2d(0f32..power.len() as f32, min_power..max_power * 1.1)
             .map_err(|e| FerrousError::Visualization(format!("Failed to build chart: {}", e)))?;
 
         let points: Vec<(f32, f32)> = power
@@ -141,7 +134,8 @@ impl Renderer {
             .map(|(i, &p)| (i as f32, p))
             .collect();
 
-        chart.draw_series(LineSeries::new(points, &RED))
+        chart
+            .draw_series(LineSeries::new(points, &RED))
             .map_err(|e| FerrousError::Visualization(format!("Failed to draw series: {}", e)))?;
 
         root.present()
@@ -151,7 +145,8 @@ impl Renderer {
     }
 
     pub fn render_to_base64(&self, data: &RenderData) -> Result<String> {
-        let temp_path = std::env::temp_dir().join(format!("ferrous_waves_{}.png", uuid::Uuid::new_v4()));
+        let temp_path =
+            std::env::temp_dir().join(format!("ferrous_waves_{}.png", uuid::Uuid::new_v4()));
 
         match data {
             RenderData::Waveform(samples) => {
@@ -172,15 +167,11 @@ impl Renderer {
 
     pub fn render_to_file<P: AsRef<Path>>(&self, data: &RenderData, output_path: P) -> Result<()> {
         match data {
-            RenderData::Waveform(samples) => {
-                self.render_waveform(samples, output_path.as_ref())
-            }
+            RenderData::Waveform(samples) => self.render_waveform(samples, output_path.as_ref()),
             RenderData::Spectrogram(spec) => {
                 self.render_spectrogram(spec, output_path.as_ref(), 44100)
             }
-            RenderData::PowerCurve(power) => {
-                self.render_power_curve(power, output_path.as_ref())
-            }
+            RenderData::PowerCurve(power) => self.render_power_curve(power, output_path.as_ref()),
         }
     }
 

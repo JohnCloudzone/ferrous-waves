@@ -45,10 +45,10 @@ fn test_stft_sine_sweep() {
 
     // Create a frequency sweep from 100Hz to 1000Hz
     let mut signal = vec![0.0; num_samples];
-    for i in 0..num_samples {
+    for (i, value) in signal.iter_mut().enumerate() {
         let t = i as f32 / sample_rate;
         let freq = 100.0 + (900.0 * t / duration); // Linear sweep
-        signal[i] = (2.0 * PI * freq * t).sin();
+        *value = (2.0 * PI * freq * t).sin();
     }
 
     let spectrogram = processor.process(&signal);
@@ -77,7 +77,10 @@ fn test_stft_sine_sweep() {
     }
 
     // Late frame should have higher frequency peak than early frame
-    assert!(late_peak_bin > early_peak_bin, "Frequency should increase over time");
+    assert!(
+        late_peak_bin > early_peak_bin,
+        "Frequency should increase over time"
+    );
 }
 
 #[test]
@@ -143,8 +146,8 @@ fn test_stft_window_effect() {
 
     // Create a signal with a discontinuity
     let mut signal = vec![1.0; 1024];
-    for i in 512..1024 {
-        signal[i] = -1.0;
+    for value in signal.iter_mut().skip(512).take(512) {
+        *value = -1.0;
     }
 
     let spec_rect = processor_rect.process(&signal);

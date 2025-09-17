@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use ferrous_waves::analysis::temporal::{OnsetDetector, BeatTracker};
+use ferrous_waves::analysis::temporal::{BeatTracker, OnsetDetector};
 
 fn benchmark_onset_detection(c: &mut Criterion) {
     let mut group = c.benchmark_group("onset_detection");

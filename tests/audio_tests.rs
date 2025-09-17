@@ -60,8 +60,8 @@ fn test_audio_buffer_to_mono_already_mono() {
 #[test]
 fn test_audio_buffer_get_channel() {
     let samples = vec![
-        1.0, 2.0, 3.0,  // Frame 1: L=1.0, R=2.0, C=3.0
-        4.0, 5.0, 6.0,  // Frame 2: L=4.0, R=5.0, C=6.0
+        1.0, 2.0, 3.0, // Frame 1: L=1.0, R=2.0, C=3.0
+        4.0, 5.0, 6.0, // Frame 2: L=4.0, R=5.0, C=6.0
     ];
     let buffer = AudioBuffer::new(samples, 44100, 3);
 

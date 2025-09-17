@@ -1,6 +1,5 @@
-use ferrous_waves::mcp::server::FerrousWavesMcp;
 use ferrous_waves::cache::Cache;
-use tracing_subscriber;
+use ferrous_waves::mcp::server::FerrousWavesMcp;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -8,7 +7,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::from_default_env()
-                .add_directive("ferrous_waves=info".parse()?)
+                .add_directive("ferrous_waves=info".parse()?),
         )
         .init();
 

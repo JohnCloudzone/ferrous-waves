@@ -1,11 +1,11 @@
+use std::fs::File;
+use std::path::Path;
 use symphonia::core::audio::AudioBufferRef;
 use symphonia::core::codecs::{Decoder, DecoderOptions};
 use symphonia::core::formats::{FormatOptions, FormatReader};
 use symphonia::core::io::MediaSourceStream;
 use symphonia::core::meta::MetadataOptions;
 use symphonia::core::probe::Hint;
-use std::fs::File;
-use std::path::Path;
 
 use crate::utils::error::{FerrousError, Result};
 
@@ -30,7 +30,12 @@ impl AudioDecoder {
 
         // Probe the media source
         let probe_result = symphonia::default::get_probe()
-            .format(&hint, mss, &FormatOptions::default(), &MetadataOptions::default())
+            .format(
+                &hint,
+                mss,
+                &FormatOptions::default(),
+                &MetadataOptions::default(),
+            )
             .map_err(|e| FerrousError::AudioDecode(format!("Failed to probe format: {}", e)))?;
 
         let format_reader = probe_result.format;
@@ -67,8 +72,16 @@ impl AudioDecoder {
                     continue;
                 }
                 Err(symphonia::core::errors::Error::IoError(e))
-                    if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
-                Err(e) => return Err(FerrousError::AudioDecode(format!("Packet read error: {}", e))),
+                    if e.kind() == std::io::ErrorKind::UnexpectedEof =>
+                {
+                    break
+                }
+                Err(e) => {
+                    return Err(FerrousError::AudioDecode(format!(
+                        "Packet read error: {}",
+                        e
+                    )))
+                }
             };
 
             if packet.track_id() != self.track_id {
@@ -118,7 +131,7 @@ fn copy_samples(decoded: &AudioBufferRef, samples: &mut Vec<f32>) -> Result<()> 
         }
         _ => {
             return Err(FerrousError::AudioDecode(
-                "Unsupported sample format".to_string()
+                "Unsupported sample format".to_string(),
             ))
         }
     }

@@ -41,7 +41,7 @@ pub struct TemporalAnalysis {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VisualsData {
-    pub waveform: Option<String>,  // Base64 encoded PNG
+    pub waveform: Option<String>, // Base64 encoded PNG
     pub spectrogram: Option<String>,
     pub mel_spectrogram: Option<String>,
     pub power_curve: Option<String>,
@@ -75,7 +75,8 @@ impl AnalysisResult {
             x if x < 0.3 => "low",
             x if x < 0.6 => "medium",
             _ => "high",
-        }.to_string()
+        }
+        .to_string()
     }
 
     fn generate_mood_descriptors(&self) -> Vec<String> {
