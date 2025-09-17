@@ -12,6 +12,7 @@ High-fidelity audio analysis bridge for development workflows. Analyze audio fil
 - **Musical Analysis**: Key detection with confidence, chord progression, harmonic complexity
 - **Quality Assessment**: SNR, THD, clipping detection, noise floor, and reliability scoring
 - **Segment Analysis**: Temporal structure detection, pattern recognition, coherence analysis
+- **Audio Fingerprinting**: Similarity detection, duplicate finding, content identification
 - **Visualization**: Waveforms, spectrograms, power curves (base64 encoded)
 - **MCP Integration**: Direct integration with AI assistants via Model Context Protocol
 - **Content-based Caching**: Fast re-analysis with BLAKE3 hashing
@@ -77,6 +78,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Loudness: {:.1} LUFS", result.perceptual.loudness_lufs);
     println!("True peak: {:.1} dBFS", result.perceptual.true_peak_dbfs);
     println!("Content type: {:?}", result.classification.primary_type);
+    println!("Audio quality score: {:.1}%", result.quality.overall_score * 100.0);
+    println!("Fingerprint hash: {:016x}", result.fingerprint.perceptual_hash);
 
     Ok(())
 }
@@ -101,10 +104,12 @@ Parameters:
 - `max_data_points`: Limit array sizes for pagination (default: 1000)
 - `cursor`: Continue from previous response's next_cursor
 
-#### `compare_audio` - Compare two audio files
+#### `compare_audio` - Compare two audio files with fingerprint similarity
 Parameters:
 - `file_a`, `file_b` (required): Paths to audio files
 - `metrics`: Optional comparison metrics to calculate
+
+Returns fingerprint similarity score (0.0-1.0) and match type (Identical, Similar, Different, etc.)
 
 #### `get_job_status` - Check analysis job status
 Parameters:
@@ -122,7 +127,8 @@ src/
 │   ├── classification.rs # Speech/music/silence detection
 │   ├── musical.rs  # Key detection, chord progression, harmonic analysis
 │   ├── quality.rs  # Audio quality assessment and issue detection
-│   └── segments.rs # Segment-based temporal structure analysis
+│   ├── segments.rs # Segment-based temporal structure analysis
+│   └── fingerprint.rs # Audio fingerprinting and similarity detection
 ├── visualization/  # Waveform and spectrogram generation
 ├── cache/          # Content-based caching system
 ├── mcp/           # MCP server implementation
@@ -164,17 +170,41 @@ cargo run --example generate_samples
 # Basic analysis
 cargo run --example basic_analysis
 
-# Envelope visualization (creates PNG)
-cargo run --example envelope_visualization
+# Spectral analysis (FFT/STFT)
+cargo run --example spectral_analysis
 
 # Onset detection
 cargo run --example onset_detection
 
+# Perceptual metrics (LUFS, dynamic range)
+cargo run --example perceptual_analysis
+
+# Content classification (speech/music/silence)
+cargo run --example content_classification
+
+# Musical analysis (key detection, chords)
+cargo run --example musical_analysis
+
+# Audio quality assessment
+cargo run --example quality_assessment
+
+# Segment-based temporal analysis
+cargo run --example segment_analysis
+
+# Audio fingerprinting and similarity detection
+cargo run --example fingerprint_similarity
+
 # Compare two audio files
 cargo run --example compare_files
 
+# Cached analysis demonstration
+cargo run --example cached_analysis
+
 # Batch processing
 cargo run --example batch_processing
+
+# Envelope visualization (creates PNG)
+cargo run --example envelope_visualization
 ```
 
 See [examples/README.md](examples/README.md) for more details.

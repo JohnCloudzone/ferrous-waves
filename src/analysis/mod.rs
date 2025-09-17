@@ -1,5 +1,6 @@
 pub mod classification;
 pub mod engine;
+pub mod fingerprint;
 pub mod musical;
 pub mod perceptual;
 pub mod quality;

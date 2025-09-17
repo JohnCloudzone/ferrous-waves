@@ -23,6 +23,7 @@ This creates a `samples/` directory with test WAV files including sine waves, ch
 - **musical_analysis.rs** - Key detection, chroma analysis, and harmonic complexity
 - **quality_assessment.rs** - Audio quality scoring, issue detection, and recommendations
 - **segment_analysis.rs** - Temporal structure, pattern detection, and coherence analysis
+- **fingerprint_similarity.rs** - Audio fingerprinting, similarity detection, and duplicate finding
 - **cached_analysis.rs** - Using the cache system for faster repeated analysis
 - **batch_processing.rs** - Process multiple files in parallel
 - **envelope_visualization.rs** - Generate waveform visualization with peak and RMS envelopes
@@ -42,6 +43,7 @@ cargo run --example content_classification
 cargo run --example musical_analysis
 cargo run --example quality_assessment
 cargo run --example segment_analysis
+cargo run --example fingerprint_similarity
 cargo run --example cached_analysis
 cargo run --example batch_processing
 cargo run --example envelope_visualization

@@ -1,4 +1,5 @@
 use crate::analysis::classification::{ContentClassification, ContentClassifier};
+use crate::analysis::fingerprint::{AudioFingerprint, FingerprintGenerator};
 use crate::analysis::musical::{MusicalAnalysis, MusicalAnalyzer};
 use crate::analysis::perceptual::{calculate_perceptual_metrics, PerceptualMetrics};
 use crate::analysis::quality::{QualityAnalyzer, QualityAssessment};
@@ -23,6 +24,7 @@ pub struct AnalysisResult {
     pub musical: MusicalAnalysis,
     pub quality: QualityAssessment,
     pub segments: SegmentAnalysis,
+    pub fingerprint: AudioFingerprint,
     pub visuals: VisualsData,
     pub insights: Vec<String>,
     pub recommendations: Vec<String>,
@@ -366,6 +368,10 @@ impl AnalysisEngine {
         let segment_analyzer = SegmentAnalyzer::new(audio.buffer.sample_rate as f32);
         let segments = segment_analyzer.analyze(&mono)?;
 
+        // Generate audio fingerprint
+        let fingerprint_generator = FingerprintGenerator::new(audio.buffer.sample_rate as f32);
+        let fingerprint = fingerprint_generator.generate(&mono)?;
+
         // Add musical insights
         insights.push(format!(
             "Key: {} (confidence: {:.0}%)",
@@ -434,6 +440,17 @@ impl AnalysisEngine {
         } else if segments.coherence_score < 0.5 {
             insights.push("Low segment coherence - abrupt changes detected".to_string());
         }
+
+        // Add fingerprint insights
+        insights.push(format!(
+            "Audio fingerprint generated with {} spectral hashes",
+            fingerprint.spectral_hashes.len()
+        ));
+
+        insights.push(format!(
+            "{} acoustic landmarks detected",
+            fingerprint.landmarks.len()
+        ));
 
         // Add perceptual insights
         if perceptual.loudness_lufs < -23.0 {
@@ -506,6 +523,7 @@ impl AnalysisEngine {
             musical,
             quality,
             segments,
+            fingerprint,
             insights,
             recommendations,
         };
@@ -540,6 +558,19 @@ impl AnalysisEngine {
             _ => None,
         };
 
+        // Compare fingerprints
+        let (fingerprint_similarity, fingerprint_match_type) = match (&analysis_a, &analysis_b) {
+            (Some(a), Some(b)) => {
+                let matcher = crate::analysis::fingerprint::FingerprintMatcher::new();
+                let match_result = matcher.compare(&a.fingerprint, &b.fingerprint);
+                (
+                    Some(match_result.similarity),
+                    Some(format!("{:?}", match_result.match_type)),
+                )
+            }
+            _ => (None, None),
+        };
+
         let duration_difference = audio_a.buffer.duration_seconds - audio_b.buffer.duration_seconds;
         let sample_rate_match = audio_a.buffer.sample_rate == audio_b.buffer.sample_rate;
 
@@ -563,6 +594,8 @@ impl AnalysisEngine {
                 sample_rate_match,
                 tempo_difference,
                 spectral_similarity: None,
+                fingerprint_similarity,
+                fingerprint_match_type,
             },
         }
     }
@@ -590,6 +623,8 @@ pub struct ComparisonMetrics {
     pub sample_rate_match: bool,
     pub tempo_difference: Option<f32>,
     pub spectral_similarity: Option<f32>,
+    pub fingerprint_similarity: Option<f32>,
+    pub fingerprint_match_type: Option<String>,
 }
 
 impl Default for AnalysisEngine {
