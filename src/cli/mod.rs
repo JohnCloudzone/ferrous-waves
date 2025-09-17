@@ -23,16 +23,8 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    /// Start MCP server
+    /// Start MCP server (stdio transport)
     Serve {
-        /// Port to listen on
-        #[arg(short, long, default_value = "3030")]
-        port: u16,
-
-        /// Host to bind to
-        #[arg(short = 'H', long, default_value = "127.0.0.1")]
-        host: String,
-
         /// Enable cache
         #[arg(long, default_value = "true")]
         cache: bool,

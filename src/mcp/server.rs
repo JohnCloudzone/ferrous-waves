@@ -206,7 +206,10 @@ impl ServerHandler for FerrousWavesMcp {
                 .build(),
             server_info: Implementation {
                 name: "ferrous-waves".to_string(),
+                title: None,
                 version: env!("CARGO_PKG_VERSION").to_string(),
+                website_url: None,
+                icons: None,
             },
             instructions: Some(
                 "Ferrous Waves audio analysis server. Tools: analyze_audio, compare_audio, get_job_status"
@@ -290,22 +293,31 @@ impl ServerHandler for FerrousWavesMcp {
             tools: vec![
                 Tool {
                     name: Cow::Borrowed("analyze_audio"),
+                    title: None,
                     description: Some(Cow::Borrowed(
                         "Analyze an audio file and return comprehensive metrics",
                     )),
                     input_schema: Arc::new(analyze_audio_schema.as_object().unwrap().clone()),
+                    output_schema: None,
+                    icons: None,
                     annotations: None,
                 },
                 Tool {
                     name: Cow::Borrowed("compare_audio"),
+                    title: None,
                     description: Some(Cow::Borrowed("Compare two audio files")),
                     input_schema: Arc::new(compare_audio_schema.as_object().unwrap().clone()),
+                    output_schema: None,
+                    icons: None,
                     annotations: None,
                 },
                 Tool {
                     name: Cow::Borrowed("get_job_status"),
+                    title: None,
                     description: Some(Cow::Borrowed("Get the status of an analysis job")),
                     input_schema: Arc::new(get_job_status_schema.as_object().unwrap().clone()),
+                    output_schema: None,
+                    icons: None,
                     annotations: None,
                 },
             ],
@@ -329,14 +341,13 @@ impl ServerHandler for FerrousWavesMcp {
                     })?;
 
                 match self.analyze_audio_impl(params).await {
-                    Ok(result) => Ok(CallToolResult {
-                        is_error: Some(false),
-                        content: vec![Content::text(result.to_string())],
-                    }),
-                    Err(e) => Ok(CallToolResult {
-                        is_error: Some(true),
-                        content: vec![Content::text(format!("Analysis failed: {}", e))],
-                    }),
+                    Ok(result) => Ok(CallToolResult::success(vec![Content::text(
+                        result.to_string(),
+                    )])),
+                    Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
+                        "Analysis failed: {}",
+                        e
+                    ))])),
                 }
             }
             "compare_audio" => {
@@ -346,14 +357,13 @@ impl ServerHandler for FerrousWavesMcp {
                     })?;
 
                 match self.compare_audio_impl(params).await {
-                    Ok(result) => Ok(CallToolResult {
-                        is_error: Some(false),
-                        content: vec![Content::text(result.to_string())],
-                    }),
-                    Err(e) => Ok(CallToolResult {
-                        is_error: Some(true),
-                        content: vec![Content::text(format!("Comparison failed: {}", e))],
-                    }),
+                    Ok(result) => Ok(CallToolResult::success(vec![Content::text(
+                        result.to_string(),
+                    )])),
+                    Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
+                        "Comparison failed: {}",
+                        e
+                    ))])),
                 }
             }
             "get_job_status" => {
@@ -361,14 +371,13 @@ impl ServerHandler for FerrousWavesMcp {
                     .get_job_status_impl(serde_json::Value::Object(arguments))
                     .await
                 {
-                    Ok(result) => Ok(CallToolResult {
-                        is_error: Some(false),
-                        content: vec![Content::text(result.to_string())],
-                    }),
-                    Err(e) => Ok(CallToolResult {
-                        is_error: Some(true),
-                        content: vec![Content::text(format!("Status check failed: {}", e))],
-                    }),
+                    Ok(result) => Ok(CallToolResult::success(vec![Content::text(
+                        result.to_string(),
+                    )])),
+                    Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
+                        "Status check failed: {}",
+                        e
+                    ))])),
                 }
             }
             _ => Err(McpError::invalid_request("Unknown tool", None)),

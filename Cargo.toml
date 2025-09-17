@@ -24,8 +24,8 @@ tokio = { version = "1.35", features = ["full"] }
 async-trait = "0.1"
 
 # MCP SDK
-rmcp = { version = "0.2.0", features = ["server", "transport-io"] }
-rmcp-macros = "0.2.0"
+rmcp = { version = "0.6.4", features = ["server", "transport-io"] }
+rmcp-macros = "0.6.4"
 uuid = { version = "1.6", features = ["v4", "serde"] }
 dashmap = "5.5"
 

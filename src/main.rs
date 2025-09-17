@@ -26,8 +26,8 @@ async fn main() -> Result<()> {
 
     // Execute command
     match cli.command {
-        Commands::Serve { port, host, cache } => {
-            commands::run_serve(port, host, cache).await?;
+        Commands::Serve { cache } => {
+            commands::run_serve(cache).await?;
         }
         Commands::Analyze {
             file,

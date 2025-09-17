@@ -8,8 +8,8 @@ use glob::glob;
 use std::fs;
 use std::path::PathBuf;
 
-pub async fn run_serve(port: u16, host: String, cache_enabled: bool) -> Result<()> {
-    println!("Starting Ferrous Waves MCP server on {}:{}...", host, port);
+pub async fn run_serve(cache_enabled: bool) -> Result<()> {
+    println!("Starting Ferrous Waves MCP server (stdio transport)...");
 
     let server = if cache_enabled {
         FerrousWavesMcp::with_cache(Cache::new())
