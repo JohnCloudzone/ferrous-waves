@@ -82,9 +82,25 @@ ferrous-waves serve
 ```
 
 The server exposes three tools:
-- `analyze_audio` - Full audio analysis with spectral and temporal features
-- `compare_audio` - Compare two audio files
-- `get_job_status` - Check analysis job status
+
+#### `analyze_audio` - Comprehensive audio analysis with filtering and pagination
+Parameters:
+- `file_path` (required): Path to audio file
+- `return_format`: "summary" (default), "full", or "visual_only"
+- `include_visuals`: Include base64-encoded images (default: false, WARNING: very large)
+- `include_spectral`: Include spectral data arrays (default: false)
+- `include_temporal`: Include temporal data arrays (default: false)
+- `max_data_points`: Limit array sizes for pagination (default: 1000)
+- `cursor`: Continue from previous response's next_cursor
+
+#### `compare_audio` - Compare two audio files
+Parameters:
+- `file_a`, `file_b` (required): Paths to audio files
+- `metrics`: Optional comparison metrics to calculate
+
+#### `get_job_status` - Check analysis job status
+Parameters:
+- `job_id` (required): Job ID from previous analysis
 
 ## Architecture
 

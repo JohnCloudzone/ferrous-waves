@@ -31,10 +31,42 @@ pub struct AnalyzeAudioParams {
     /// Return format: "full" | "summary" | "visual_only"
     #[serde(default = "default_return_format")]
     pub return_format: String,
+
+    /// Maximum number of data points in arrays (for pagination)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_data_points: Option<usize>,
+
+    /// Pagination cursor for continuing from previous results
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cursor: Option<String>,
+
+    /// Include visual data (base64 images) - defaults to false for MCP
+    #[serde(default = "default_include_visuals")]
+    pub include_visuals: bool,
+
+    /// Include raw spectral data arrays
+    #[serde(default = "default_include_spectral")]
+    pub include_spectral: bool,
+
+    /// Include temporal data arrays (beats, onsets)
+    #[serde(default = "default_include_temporal")]
+    pub include_temporal: bool,
 }
 
 fn default_return_format() -> String {
-    "full".to_string()
+    "summary".to_string()
+}
+
+fn default_include_visuals() -> bool {
+    false // Never include base64 images by default in MCP
+}
+
+fn default_include_spectral() -> bool {
+    false // Don't include large arrays by default
+}
+
+fn default_include_temporal() -> bool {
+    false // Don't include large arrays by default
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -120,22 +152,159 @@ impl FerrousWavesMcp {
             status.message = Some("Analysis complete".to_string());
         }
 
+        // Apply filtering based on parameters
+        let mut filtered_result = analysis_result;
+
+        // Filter visuals unless explicitly requested
+        if !params.include_visuals {
+            filtered_result.visuals.waveform = None;
+            filtered_result.visuals.spectrogram = None;
+            filtered_result.visuals.mel_spectrogram = None;
+            filtered_result.visuals.power_curve = None;
+        }
+
+        // Filter spectral data unless requested
+        if !params.include_spectral {
+            filtered_result.spectral.spectral_centroid.clear();
+            filtered_result.spectral.spectral_rolloff.clear();
+            filtered_result.spectral.spectral_flux.clear();
+            filtered_result.spectral.mfcc.clear();
+            filtered_result.spectral.dominant_frequencies.clear();
+        }
+
+        // Filter temporal data unless requested
+        if !params.include_temporal {
+            filtered_result.temporal.beats.clear();
+            filtered_result.temporal.onsets.clear();
+        }
+
+        // Parse cursor for pagination
+        let offset = if let Some(cursor) = &params.cursor {
+            cursor.parse::<usize>().unwrap_or(0)
+        } else {
+            0
+        };
+
+        // Apply pagination with max_data_points
+        let mut next_cursor = None;
+        if let Some(max_points) = params.max_data_points {
+            if params.include_spectral {
+                // Paginate spectral data
+                let total_len = filtered_result.spectral.spectral_centroid.len();
+                if offset < total_len {
+                    let end = (offset + max_points).min(total_len);
+                    filtered_result.spectral.spectral_centroid =
+                        filtered_result.spectral.spectral_centroid[offset..end].to_vec();
+
+                    if end < total_len {
+                        next_cursor = Some(end.to_string());
+                    }
+                }
+
+                // Apply same pagination to other spectral arrays
+                if offset < filtered_result.spectral.spectral_flux.len() {
+                    let end =
+                        (offset + max_points).min(filtered_result.spectral.spectral_flux.len());
+                    filtered_result.spectral.spectral_flux =
+                        filtered_result.spectral.spectral_flux[offset..end].to_vec();
+                }
+
+                if offset < filtered_result.spectral.spectral_rolloff.len() {
+                    let end =
+                        (offset + max_points).min(filtered_result.spectral.spectral_rolloff.len());
+                    filtered_result.spectral.spectral_rolloff =
+                        filtered_result.spectral.spectral_rolloff[offset..end].to_vec();
+                }
+
+                // MFCC is special - limit number of frames
+                if offset < filtered_result.spectral.mfcc.len() {
+                    let end = (offset + max_points).min(filtered_result.spectral.mfcc.len());
+                    filtered_result.spectral.mfcc =
+                        filtered_result.spectral.mfcc[offset..end].to_vec();
+                }
+            }
+
+            if params.include_temporal {
+                // Paginate temporal data
+                if offset < filtered_result.temporal.beats.len() {
+                    let end = (offset + max_points).min(filtered_result.temporal.beats.len());
+                    filtered_result.temporal.beats =
+                        filtered_result.temporal.beats[offset..end].to_vec();
+
+                    if end < filtered_result.temporal.beats.len() && next_cursor.is_none() {
+                        next_cursor = Some(end.to_string());
+                    }
+                }
+
+                if offset < filtered_result.temporal.onsets.len() {
+                    let end = (offset + max_points).min(filtered_result.temporal.onsets.len());
+                    filtered_result.temporal.onsets =
+                        filtered_result.temporal.onsets[offset..end].to_vec();
+
+                    if end < filtered_result.temporal.onsets.len() && next_cursor.is_none() {
+                        next_cursor = Some(end.to_string());
+                    }
+                }
+            }
+        }
+
         // Format response based on return_format
         let response_data = match params.return_format.as_str() {
-            "summary" => json!({
-                "job_id": job_id,
-                "status": "success",
-                "summary": analysis_result.get_summary(),
-            }),
+            "summary" => {
+                let mut response = json!({
+                    "job_id": job_id,
+                    "status": "success",
+                    "summary": filtered_result.get_summary(),
+                    "insights": filtered_result.insights.iter().take(5).cloned().collect::<Vec<_>>(),
+                });
+                if let Some(cursor) = next_cursor {
+                    response["next_cursor"] = json!(cursor);
+                }
+                response
+            }
             "visual_only" => json!({
                 "job_id": job_id,
                 "status": "success",
-                "visuals": analysis_result.get_visuals(),
+                "visuals": filtered_result.get_visuals(),
             }),
+            "full" => {
+                let mut response = json!({
+                    "job_id": job_id,
+                    "status": "success",
+                    "data": {
+                        "summary": filtered_result.summary,
+                        "spectral": if params.include_spectral {
+                            Some(filtered_result.spectral)
+                        } else {
+                            None
+                        },
+                        "temporal": if params.include_temporal {
+                            Some(filtered_result.temporal)
+                        } else {
+                            None
+                        },
+                        "visuals": if params.include_visuals {
+                            Some(filtered_result.visuals)
+                        } else {
+                            None
+                        },
+                        "insights": filtered_result.insights,
+                        "recommendations": filtered_result.recommendations,
+                    }
+                });
+                if let Some(cursor) = next_cursor {
+                    response["next_cursor"] = json!(cursor);
+                    response["has_more"] = json!(true);
+                } else {
+                    response["has_more"] = json!(false);
+                }
+                response
+            }
             _ => json!({
                 "job_id": job_id,
                 "status": "success",
-                "data": analysis_result,
+                "summary": filtered_result.get_summary(),
+                "insights": filtered_result.insights.iter().take(5).cloned().collect::<Vec<_>>(),
             }),
         };
 
@@ -251,8 +420,32 @@ impl ServerHandler for FerrousWavesMcp {
                 "return_format": {
                     "type": "string",
                     "enum": ["full", "summary", "visual_only"],
-                    "description": "Return format",
-                    "default": "full"
+                    "description": "Return format (default: summary for MCP compatibility)",
+                    "default": "summary"
+                },
+                "max_data_points": {
+                    "type": "integer",
+                    "description": "Maximum number of data points in arrays (for pagination)",
+                    "default": 1000
+                },
+                "cursor": {
+                    "type": "string",
+                    "description": "Pagination cursor from previous response's next_cursor field"
+                },
+                "include_visuals": {
+                    "type": "boolean",
+                    "description": "Include visual data (base64 images) - WARNING: very large",
+                    "default": false
+                },
+                "include_spectral": {
+                    "type": "boolean",
+                    "description": "Include raw spectral data arrays",
+                    "default": false
+                },
+                "include_temporal": {
+                    "type": "boolean",
+                    "description": "Include temporal data arrays (beats, onsets)",
+                    "default": false
                 }
             },
             "required": ["file_path"]

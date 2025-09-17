@@ -7,22 +7,58 @@ fn main() {
     println!("Example MCP Tool Calls:");
     println!();
 
-    // Example 1: Analyze a single audio file
-    let analyze_request = json!({
+    // Example 1: Analyze with default settings (returns compact summary)
+    let analyze_summary = json!({
         "tool": "analyze_audio",
         "arguments": {
-            "file_path": "/path/to/audio.wav",
-            "return_format": "summary"
+            "file_path": "/path/to/audio.wav"
         }
     });
-    println!("1. Analyze Audio:");
+    println!("1. Analyze Audio (Summary - Default):");
     println!(
         "{}",
-        serde_json::to_string_pretty(&analyze_request).unwrap()
+        serde_json::to_string_pretty(&analyze_summary).unwrap()
     );
     println!();
 
-    // Example 2: Compare two audio files
+    // Example 2: Analyze with spectral data and pagination
+    let analyze_detailed = json!({
+        "tool": "analyze_audio",
+        "arguments": {
+            "file_path": "/path/to/audio.wav",
+            "return_format": "full",
+            "include_spectral": true,
+            "include_temporal": true,
+            "max_data_points": 100,
+            "cursor": null
+        }
+    });
+    println!("2. Analyze Audio (Full with Pagination):");
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&analyze_detailed).unwrap()
+    );
+    println!();
+
+    // Example 3: Continue pagination with cursor
+    let analyze_next_page = json!({
+        "tool": "analyze_audio",
+        "arguments": {
+            "file_path": "/path/to/audio.wav",
+            "return_format": "full",
+            "include_spectral": true,
+            "max_data_points": 100,
+            "cursor": "100"  // From previous response's next_cursor
+        }
+    });
+    println!("3. Continue Pagination:");
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&analyze_next_page).unwrap()
+    );
+    println!();
+
+    // Example 4: Compare two audio files
     let compare_request = json!({
         "tool": "compare_audio",
         "arguments": {
@@ -30,21 +66,21 @@ fn main() {
             "file_b": "/path/to/processed.wav"
         }
     });
-    println!("2. Compare Audio:");
+    println!("4. Compare Audio:");
     println!(
         "{}",
         serde_json::to_string_pretty(&compare_request).unwrap()
     );
     println!();
 
-    // Example 3: Check job status
+    // Example 5: Check job status
     let status_request = json!({
         "tool": "get_job_status",
         "arguments": {
             "job_id": "550e8400-e29b-41d4-a716-446655440000"
         }
     });
-    println!("3. Get Job Status:");
+    println!("5. Get Job Status:");
     println!("{}", serde_json::to_string_pretty(&status_request).unwrap());
     println!();
 
