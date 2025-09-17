@@ -1,3 +1,4 @@
+use crate::analysis::classification::{ContentClassification, ContentClassifier};
 use crate::analysis::perceptual::{calculate_perceptual_metrics, PerceptualMetrics};
 use crate::analysis::spectral::{StftProcessor, WindowFunction};
 use crate::analysis::temporal::{BeatTracker, OnsetDetector};
@@ -15,6 +16,7 @@ pub struct AnalysisResult {
     pub spectral: SpectralAnalysis,
     pub temporal: TemporalAnalysis,
     pub perceptual: PerceptualMetrics,
+    pub classification: ContentClassification,
     pub visuals: VisualsData,
     pub insights: Vec<String>,
     pub recommendations: Vec<String>,
@@ -313,6 +315,39 @@ impl AnalysisEngine {
         // Calculate perceptual metrics
         let perceptual = calculate_perceptual_metrics(&mono, 1, audio.buffer.sample_rate as f32)?;
 
+        // Classify content type
+        let classifier = ContentClassifier::new(audio.buffer.sample_rate as f32);
+        let classification = classifier.classify(&mono)?;
+
+        // Add classification insights
+        match classification.primary_type {
+            crate::analysis::classification::ContentType::Speech => {
+                insights.push(format!(
+                    "Content type: Speech (confidence: {:.0}%)",
+                    classification.confidence * 100.0
+                ));
+                if tempo.is_some() {
+                    insights.push("Speech detected with rhythmic elements".to_string());
+                }
+            }
+            crate::analysis::classification::ContentType::Music => {
+                insights.push(format!(
+                    "Content type: Music (confidence: {:.0}%)",
+                    classification.confidence * 100.0
+                ));
+            }
+            crate::analysis::classification::ContentType::Silence => {
+                insights.push("Content type: Silence detected".to_string());
+            }
+            crate::analysis::classification::ContentType::Mixed => {
+                insights.push(format!(
+                    "Content type: Mixed speech/music (speech: {:.0}%, music: {:.0}%)",
+                    classification.scores.speech * 100.0,
+                    classification.scores.music * 100.0
+                ));
+            }
+        }
+
         // Add perceptual insights
         if perceptual.loudness_lufs < -23.0 {
             insights.push(format!(
@@ -380,6 +415,7 @@ impl AnalysisEngine {
                 power_curve: power_curve_base64,
             },
             perceptual,
+            classification,
             insights,
             recommendations,
         };
