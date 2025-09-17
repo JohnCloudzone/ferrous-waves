@@ -101,7 +101,6 @@ impl AnalysisEngine {
 
         for frame_idx in 0..spectrogram.shape()[1] {
             let frame = spectrogram.column(frame_idx);
-            let frame_slice = frame.as_slice().unwrap();
 
             // Spectral centroid
             let mut weighted_sum = 0.0;
@@ -109,7 +108,7 @@ impl AnalysisEngine {
             let mut peak_freq = 0.0;
             let mut peak_mag = 0.0;
 
-            for (bin, &mag) in frame_slice.iter().enumerate() {
+            for (bin, &mag) in frame.iter().enumerate() {
                 let freq = bin as f32 * audio.buffer.sample_rate as f32 / self.fft_size as f32;
                 weighted_sum += freq * mag;
                 magnitude_sum += mag;
@@ -131,7 +130,7 @@ impl AnalysisEngine {
             // Spectral flux
             if frame_idx > 0 {
                 let prev_frame = spectrogram.column(frame_idx - 1);
-                let flux: f32 = frame_slice.iter()
+                let flux: f32 = frame.iter()
                     .zip(prev_frame.iter())
                     .map(|(&curr, &prev)| (curr - prev).max(0.0).powi(2))
                     .sum();

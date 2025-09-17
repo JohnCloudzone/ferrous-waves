@@ -3,6 +3,7 @@
 pub mod audio;
 pub mod analysis;
 pub mod cache;
+pub mod cli;
 pub mod mcp;
 pub mod utils;
 pub mod visualization;
