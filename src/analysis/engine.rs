@@ -1,3 +1,4 @@
+use crate::analysis::perceptual::{calculate_perceptual_metrics, PerceptualMetrics};
 use crate::analysis::spectral::{StftProcessor, WindowFunction};
 use crate::analysis::temporal::{BeatTracker, OnsetDetector};
 use crate::audio::AudioFile;
@@ -13,6 +14,7 @@ pub struct AnalysisResult {
     pub summary: AudioSummary,
     pub spectral: SpectralAnalysis,
     pub temporal: TemporalAnalysis,
+    pub perceptual: PerceptualMetrics,
     pub visuals: VisualsData,
     pub insights: Vec<String>,
     pub recommendations: Vec<String>,
@@ -308,6 +310,45 @@ impl AnalysisEngine {
             insights.push("High rhythmic activity detected".to_string());
         }
 
+        // Calculate perceptual metrics
+        let perceptual = calculate_perceptual_metrics(&mono, 1, audio.buffer.sample_rate as f32)?;
+
+        // Add perceptual insights
+        if perceptual.loudness_lufs < -23.0 {
+            insights.push(format!(
+                "Low loudness level: {:.1} LUFS",
+                perceptual.loudness_lufs
+            ));
+            recommendations
+                .push("Consider normalizing to -16 LUFS for streaming platforms".to_string());
+        } else if perceptual.loudness_lufs > -14.0 {
+            insights.push(format!(
+                "High loudness level: {:.1} LUFS",
+                perceptual.loudness_lufs
+            ));
+        }
+
+        if perceptual.true_peak_dbfs > -1.0 {
+            insights.push(format!(
+                "True peak exceeds recommended level: {:.1} dBFS",
+                perceptual.true_peak_dbfs
+            ));
+            recommendations.push(
+                "Consider limiting to -1 dBFS true peak to prevent inter-sample clipping"
+                    .to_string(),
+            );
+        }
+
+        if perceptual.loudness_range > 20.0 {
+            insights.push(format!(
+                "Wide loudness range: {:.1} LU",
+                perceptual.loudness_range
+            ));
+        } else if perceptual.loudness_range < 5.0 {
+            insights.push("Narrow loudness range detected".to_string());
+            recommendations.push("Consider adding more dynamic variation".to_string());
+        }
+
         let result = AnalysisResult {
             summary: AudioSummary {
                 duration: audio.buffer.duration_seconds,
@@ -338,6 +379,7 @@ impl AnalysisEngine {
                 mel_spectrogram: None,
                 power_curve: power_curve_base64,
             },
+            perceptual,
             insights,
             recommendations,
         };
