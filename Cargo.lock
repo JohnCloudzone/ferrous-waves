@@ -689,6 +689,7 @@ dependencies = [
  "config",
  "criterion",
  "dashmap",
+ "fastrand",
  "futures",
  "glob",
  "hound",
