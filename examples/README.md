@@ -20,6 +20,7 @@ This creates a `samples/` directory with test WAV files including sine waves, ch
 - **onset_detection.rs** - Detect note onsets and transients in audio
 - **perceptual_analysis.rs** - LUFS loudness measurement and perceptual metrics
 - **content_classification.rs** - Speech/music/silence detection with confidence scores
+- **musical_analysis.rs** - Key detection, chroma analysis, and harmonic complexity
 - **cached_analysis.rs** - Using the cache system for faster repeated analysis
 - **batch_processing.rs** - Process multiple files in parallel
 - **envelope_visualization.rs** - Generate waveform visualization with peak and RMS envelopes
@@ -36,6 +37,7 @@ cargo run --example spectral_analysis
 cargo run --example onset_detection
 cargo run --example perceptual_analysis
 cargo run --example content_classification
+cargo run --example musical_analysis
 cargo run --example cached_analysis
 cargo run --example batch_processing
 cargo run --example envelope_visualization

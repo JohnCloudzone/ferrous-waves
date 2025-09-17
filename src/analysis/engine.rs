@@ -1,4 +1,5 @@
 use crate::analysis::classification::{ContentClassification, ContentClassifier};
+use crate::analysis::musical::{MusicalAnalysis, MusicalAnalyzer};
 use crate::analysis::perceptual::{calculate_perceptual_metrics, PerceptualMetrics};
 use crate::analysis::spectral::{StftProcessor, WindowFunction};
 use crate::analysis::temporal::{BeatTracker, OnsetDetector};
@@ -17,6 +18,7 @@ pub struct AnalysisResult {
     pub temporal: TemporalAnalysis,
     pub perceptual: PerceptualMetrics,
     pub classification: ContentClassification,
+    pub musical: MusicalAnalysis,
     pub visuals: VisualsData,
     pub insights: Vec<String>,
     pub recommendations: Vec<String>,
@@ -78,8 +80,8 @@ impl AnalysisResult {
     }
 
     fn estimate_key(&self) -> String {
-        // Simplified key estimation
-        "Am".to_string()
+        // Use the enhanced musical key detection
+        self.musical.key.key.clone()
     }
 
     fn calculate_energy_profile(&self) -> String {
@@ -348,6 +350,41 @@ impl AnalysisEngine {
             }
         }
 
+        // Perform musical analysis
+        let musical_analyzer = MusicalAnalyzer::new(audio.buffer.sample_rate as f32);
+        let musical = musical_analyzer.analyze(&mono)?;
+
+        // Add musical insights
+        insights.push(format!(
+            "Key: {} (confidence: {:.0}%)",
+            musical.key.key,
+            musical.key.confidence * 100.0
+        ));
+
+        if musical.tonality > 0.7 {
+            insights.push("Strong tonal center detected".to_string());
+        } else if musical.tonality < 0.3 {
+            insights.push("Weak or ambiguous tonality".to_string());
+        }
+
+        if musical.harmonic_complexity > 0.7 {
+            insights.push("Harmonically complex composition".to_string());
+        }
+
+        if let Some(ref progression) = musical.chord_progression {
+            if progression.confidence > 0.5 {
+                let chord_names: Vec<String> = progression
+                    .chords
+                    .iter()
+                    .take(4)
+                    .map(|c| c.chord.clone())
+                    .collect();
+                if !chord_names.is_empty() {
+                    insights.push(format!("Chord progression: {}", chord_names.join(" - ")));
+                }
+            }
+        }
+
         // Add perceptual insights
         if perceptual.loudness_lufs < -23.0 {
             insights.push(format!(
@@ -416,6 +453,7 @@ impl AnalysisEngine {
             },
             perceptual,
             classification,
+            musical,
             insights,
             recommendations,
         };
