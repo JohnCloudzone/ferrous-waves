@@ -1,4 +1,4 @@
-use ferrous_waves::audio::{AudioBuffer, AudioFile, AudioFormat};
+use ferrous_waves::audio::{AudioBuffer, AudioFormat};
 use std::f32::consts::PI;
 
 #[test]

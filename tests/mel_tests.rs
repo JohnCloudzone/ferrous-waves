@@ -3,7 +3,7 @@ use ndarray::Array2;
 
 #[test]
 fn test_mel_filterbank_creation() {
-    let filterbank = MelFilterBank::new(40, 44100, 2048);
+    MelFilterBank::new(40, 44100, 2048);
     // Should create without panic
 }
 
@@ -87,7 +87,6 @@ fn test_filterbank_frequency_coverage() {
     let filterbank = MelFilterBank::new(32, sample_rate, 1024);
 
     // The filterbank should cover from 0 Hz to Nyquist frequency
-    let nyquist = sample_rate / 2;
 
     // Get the filter bank matrix
     let filters = filterbank.get_filters();

@@ -2,7 +2,7 @@ use ferrous_waves::analysis::temporal::{OnsetDetector, BeatTracker};
 
 #[test]
 fn test_onset_detector_creation() {
-    let detector = OnsetDetector::new();
+    OnsetDetector::new();
     // Should create without panic
 }
 
@@ -74,7 +74,7 @@ fn test_onset_detection_regular_beats() {
 
 #[test]
 fn test_beat_tracker_creation() {
-    let tracker = BeatTracker::new();
+    BeatTracker::new();
     // Should create without panic
 }
 

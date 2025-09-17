@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 
 #[test]
 fn test_stft_processor_creation() {
-    let processor = StftProcessor::new(1024, 512, WindowFunction::Hann);
+    StftProcessor::new(1024, 512, WindowFunction::Hann);
     // Should create without panic
 }
 

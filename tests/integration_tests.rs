@@ -1,5 +1,5 @@
 use ferrous_waves::{
-    audio::{AudioBuffer, AudioFile},
+    audio::AudioBuffer,
     analysis::spectral::{FftProcessor, StftProcessor, MelFilterBank, WindowFunction},
     analysis::temporal::{OnsetDetector, BeatTracker},
 };
@@ -82,7 +82,7 @@ fn test_full_analysis_pipeline() {
 
     // Beat Tracking
     let beat_tracker = BeatTracker::new();
-    let tempo = beat_tracker.estimate_tempo(&onsets);
+    beat_tracker.estimate_tempo(&onsets);
 
     // The generated audio doesn't have a clear beat, so tempo might be None
     // But the pipeline should complete without errors
@@ -120,7 +120,7 @@ fn test_different_sample_rates() {
         let mono = buffer.to_mono();
 
         let stft = StftProcessor::new(1024, 512, WindowFunction::Hann);
-        let spectrogram = stft.process(&mono);
+        stft.process(&mono);
 
         // Verify frequency bins are correct for each sample rate
         let freq_bins = stft.frequency_bins(sr);
