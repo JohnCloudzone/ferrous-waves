@@ -3,14 +3,24 @@ use crate::analysis::spectral::{StftProcessor, WindowFunction};
 use crate::analysis::temporal::{OnsetDetector, BeatTracker};
 use crate::mcp::tools::{AnalysisResult, AudioSummary, SpectralAnalysis, TemporalAnalysis, VisualsData};
 use crate::visualization::{Renderer, RenderData};
+use crate::cache::{Cache, generate_cache_key};
 use crate::utils::error::Result;
 use serde::{Serialize, Deserialize};
+use std::path::Path;
+
+#[derive(Clone, Serialize, Deserialize)]
+struct CacheParams {
+    fft_size: usize,
+    hop_size: usize,
+    window_function: WindowFunction,
+}
 
 #[derive(Clone)]
 pub struct AnalysisEngine {
     fft_size: usize,
     hop_size: usize,
     window_function: WindowFunction,
+    cache: Option<Cache>,
 }
 
 impl AnalysisEngine {
@@ -19,6 +29,7 @@ impl AnalysisEngine {
             fft_size: 2048,
             hop_size: 512,
             window_function: WindowFunction::Hann,
+            cache: Some(Cache::new()),
         }
     }
 
@@ -27,10 +38,39 @@ impl AnalysisEngine {
             fft_size,
             hop_size,
             window_function,
+            cache: Some(Cache::new()),
         }
     }
 
+    pub fn with_cache(mut self, cache: Cache) -> Self {
+        self.cache = Some(cache);
+        self
+    }
+
+    pub fn without_cache(mut self) -> Self {
+        self.cache = None;
+        self
+    }
+
     pub async fn analyze(&self, audio: &AudioFile) -> Result<AnalysisResult> {
+        // Check cache first
+        if let Some(ref cache) = self.cache {
+            let cache_params = CacheParams {
+                fft_size: self.fft_size,
+                hop_size: self.hop_size,
+                window_function: self.window_function,
+            };
+
+            let cache_key = generate_cache_key(Path::new(&audio.path), &cache_params);
+
+            // Try to get from cache
+            if let Some(cached_data) = cache.get(&cache_key) {
+                if let Ok(result) = bincode::deserialize::<AnalysisResult>(&cached_data) {
+                    return Ok(result);
+                }
+            }
+        }
+
         // Convert to mono for analysis
         let mono = audio.buffer.to_mono();
 
@@ -167,7 +207,7 @@ impl AnalysisEngine {
             insights.push("High rhythmic activity detected".to_string());
         }
 
-        Ok(AnalysisResult {
+        let result = AnalysisResult {
             summary: AudioSummary {
                 duration: audio.buffer.duration_seconds,
                 sample_rate: audio.buffer.sample_rate,
@@ -199,7 +239,24 @@ impl AnalysisEngine {
             },
             insights,
             recommendations,
-        })
+        };
+
+        // Save to cache
+        if let Some(ref cache) = self.cache {
+            let cache_params = CacheParams {
+                fft_size: self.fft_size,
+                hop_size: self.hop_size,
+                window_function: self.window_function,
+            };
+
+            let cache_key = generate_cache_key(Path::new(&audio.path), &cache_params);
+
+            if let Ok(serialized) = bincode::serialize(&result) {
+                cache.put(cache_key, serialized).ok();
+            }
+        }
+
+        Ok(result)
     }
 
     pub async fn compare(&self, audio_a: &AudioFile, audio_b: &AudioFile) -> ComparisonResult {

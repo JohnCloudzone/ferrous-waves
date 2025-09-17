@@ -1,6 +1,7 @@
 use apodize::{hanning_iter, hamming_iter, blackman_iter, nuttall_iter};
+use serde::{Serialize, Deserialize};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum WindowFunction {
     Hann,
     Hamming,
