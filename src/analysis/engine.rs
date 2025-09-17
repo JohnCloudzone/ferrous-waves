@@ -2,6 +2,7 @@ use crate::audio::AudioFile;
 use crate::analysis::spectral::{StftProcessor, WindowFunction};
 use crate::analysis::temporal::{OnsetDetector, BeatTracker};
 use crate::mcp::tools::{AnalysisResult, AudioSummary, SpectralAnalysis, TemporalAnalysis, VisualsData};
+use crate::visualization::{Renderer, RenderData};
 use crate::utils::error::Result;
 use serde::{Serialize, Deserialize};
 
@@ -121,6 +122,22 @@ impl AnalysisEngine {
             0.0
         };
 
+        // Generate visualizations
+        let renderer = Renderer::new(1920, 600);
+
+        let waveform_base64 = renderer.render_to_base64(&RenderData::Waveform(&mono)).ok();
+        let spectrogram_base64 = renderer.render_to_base64(&RenderData::Spectrogram(&spectrogram)).ok();
+
+        // Calculate power curve for visualization
+        let power_curve: Vec<f32> = (0..spectrogram.shape()[1])
+            .map(|frame_idx| {
+                let frame = spectrogram.column(frame_idx);
+                frame.iter().map(|&x| x * x).sum::<f32>().sqrt()
+            })
+            .collect();
+
+        let power_curve_base64 = renderer.render_to_base64(&RenderData::PowerCurve(&power_curve)).ok();
+
         // Generate insights
         let mut insights = Vec::new();
         let mut recommendations = Vec::new();
@@ -175,10 +192,10 @@ impl AnalysisEngine {
                 rhythmic_complexity: onsets.len() as f32 / audio.buffer.duration_seconds,
             },
             visuals: VisualsData {
-                waveform: None,
-                spectrogram: None,
+                waveform: waveform_base64,
+                spectrogram: spectrogram_base64,
                 mel_spectrogram: None,
-                power_curve: None,
+                power_curve: power_curve_base64,
             },
             insights,
             recommendations,
