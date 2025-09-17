@@ -12,9 +12,8 @@ use uuid::Uuid;
 use dashmap::DashMap;
 
 use crate::audio::AudioFile;
-use crate::mcp::tools::{AnalysisResult, AudioSummary, SpectralAnalysis, TemporalAnalysis, VisualsData};
-use crate::analysis::spectral::{FftProcessor, StftProcessor, WindowFunction};
-use crate::analysis::temporal::{OnsetDetector, BeatTracker};
+use crate::AnalysisEngine;
+use crate::cache::Cache;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnalyzeAudioParams {
@@ -61,12 +60,21 @@ pub struct JobStatus {
 
 #[derive(Clone)]
 pub struct FerrousWavesMcp {
+    engine: AnalysisEngine,
     active_jobs: Arc<DashMap<String, JobStatus>>,
 }
 
 impl FerrousWavesMcp {
     pub fn new() -> Self {
         Self {
+            engine: AnalysisEngine::new(),
+            active_jobs: Arc::new(DashMap::new()),
+        }
+    }
+
+    pub fn with_cache(cache: Cache) -> Self {
+        Self {
+            engine: AnalysisEngine::new().with_cache(cache),
             active_jobs: Arc::new(DashMap::new()),
         }
     }
@@ -92,156 +100,12 @@ impl FerrousWavesMcp {
         // Update progress
         if let Some(mut status) = self.active_jobs.get_mut(&job_id) {
             status.progress = 0.2;
-            status.message = Some("Analyzing audio".to_string());
+            status.message = Some("Performing comprehensive analysis".to_string());
         }
 
-        // Convert to mono for analysis
-        let mono_buffer = audio.buffer.to_mono();
-        let samples = &mono_buffer;
-
-        // Calculate basic audio metrics
-        let peak_amplitude = samples.iter()
-            .map(|s| s.abs())
-            .fold(0.0f32, |a, b| a.max(b));
-
-        let rms_level = (samples.iter()
-            .map(|s| s * s)
-            .sum::<f32>() / samples.len() as f32)
-            .sqrt();
-
-        let dynamic_range = if rms_level > 0.0 {
-            20.0 * (peak_amplitude / rms_level).log10()
-        } else {
-            0.0
-        };
-
-        // Update progress
-        if let Some(mut status) = self.active_jobs.get_mut(&job_id) {
-            status.progress = 0.4;
-            status.message = Some("Performing spectral analysis".to_string());
-        }
-
-        // Spectral analysis
-        let fft_processor = FftProcessor::new(2048);
-        let stft_processor = StftProcessor::new(2048, 512, WindowFunction::Hann);
-
-        // Get STFT frames
-        let stft_frames = stft_processor.process(samples);
-
-        // Calculate spectral features (simplified)
-        let mut spectral_centroids = Vec::new();
-        let mut spectral_flux_values = Vec::new();
-        let mut prev_magnitude: Option<Vec<f32>> = None;
-
-        // Process STFT frames
-        let num_frames = stft_frames.shape()[0];
-        for frame_idx in 0..num_frames {
-            // Extract frame from 2D array
-            let frame = stft_frames.row(frame_idx);
-            let frame_slice = frame.as_slice().unwrap();
-            let magnitude = fft_processor.magnitude_spectrum(frame_slice);
-
-            // Spectral centroid
-            let mut weighted_sum = 0.0;
-            let mut magnitude_sum = 0.0;
-            for (bin, &mag) in magnitude.iter().enumerate() {
-                let freq = bin as f32 * audio.buffer.sample_rate as f32 / 2048.0;
-                weighted_sum += freq * mag;
-                magnitude_sum += mag;
-            }
-            if magnitude_sum > 0.0 {
-                spectral_centroids.push(weighted_sum / magnitude_sum);
-            }
-
-            // Spectral flux
-            if let Some(ref prev_mag) = prev_magnitude {
-                let flux: f32 = magnitude.iter()
-                    .zip(prev_mag.iter())
-                    .map(|(&curr, &prev)| (curr - prev).max(0.0).powi(2))
-                    .sum();
-                spectral_flux_values.push(flux.sqrt());
-            }
-
-            prev_magnitude = Some(magnitude);
-        }
-
-        // Update progress
-        if let Some(mut status) = self.active_jobs.get_mut(&job_id) {
-            status.progress = 0.6;
-            status.message = Some("Performing temporal analysis".to_string());
-        }
-
-        // Temporal analysis using spectral flux
-        let onset_detector = OnsetDetector::new();
-        let onset_times = onset_detector.detect_onsets(&spectral_flux_values, 512, audio.buffer.sample_rate);
-
-        let beat_tracker = BeatTracker::new();
-        let tempo = beat_tracker.estimate_tempo(&onset_times);
-        let beats = tempo.map(|t| beat_tracker.track_beats(&onset_times, t))
-            .unwrap_or_default();
-
-        // Update progress
-        if let Some(mut status) = self.active_jobs.get_mut(&job_id) {
-            status.progress = 0.8;
-            status.message = Some("Generating insights".to_string());
-        }
-
-        // Generate insights
-        let mut insights = Vec::new();
-        let mut recommendations = Vec::new();
-
-        if peak_amplitude > 0.95 {
-            insights.push("Audio contains potential clipping".to_string());
-            recommendations.push("Consider reducing input gain to avoid distortion".to_string());
-        }
-
-        if let Some(t) = tempo {
-            insights.push(format!("Detected tempo: {:.1} BPM", t));
-            if t < 80.0 {
-                insights.push("Slow tempo detected, suitable for ambient or relaxation".to_string());
-            } else if t > 140.0 {
-                insights.push("Fast tempo detected, suitable for energetic content".to_string());
-            }
-        }
-
-        if dynamic_range < 6.0 {
-            insights.push("Low dynamic range detected".to_string());
-            recommendations.push("Consider applying less compression for more dynamic sound".to_string());
-        }
-
-        let analysis_result = AnalysisResult {
-            summary: AudioSummary {
-                duration: audio.buffer.duration_seconds,
-                sample_rate: audio.buffer.sample_rate,
-                channels: audio.buffer.channels,
-                format: format!("{:?}", audio.format),
-                peak_amplitude,
-                rms_level,
-                dynamic_range,
-            },
-            spectral: SpectralAnalysis {
-                spectral_centroid: spectral_centroids.clone(),
-                spectral_rolloff: vec![],
-                spectral_flux: spectral_flux_values,
-                mfcc: vec![],
-                dominant_frequencies: vec![],
-            },
-            temporal: TemporalAnalysis {
-                tempo,
-                beats: beats.clone(),
-                onsets: onset_times.clone(),
-                tempo_stability: 0.0,
-                rhythmic_complexity: onset_times.len() as f32 / audio.buffer.duration_seconds,
-            },
-            visuals: VisualsData {
-                waveform: None,
-                spectrogram: None,
-                mel_spectrogram: None,
-                power_curve: None,
-            },
-            insights,
-            recommendations,
-        };
+        // Use AnalysisEngine for comprehensive analysis
+        let analysis_result = self.engine.analyze(&audio).await
+            .map_err(|e| McpError::internal_error(format!("Analysis failed: {}", e), None))?;
 
         // Update progress
         if let Some(mut status) = self.active_jobs.get_mut(&job_id) {
@@ -280,25 +144,11 @@ impl FerrousWavesMcp {
         let audio_b = AudioFile::load(&params.file_b)
             .map_err(|e| McpError::internal_error(format!("Failed to load file B: {}", e), None))?;
 
-        // Simple comparison for now
-        let comparison = json!({
-            "file_a": {
-                "duration": audio_a.buffer.duration_seconds,
-                "sample_rate": audio_a.buffer.sample_rate,
-                "channels": audio_a.buffer.channels,
-            },
-            "file_b": {
-                "duration": audio_b.buffer.duration_seconds,
-                "sample_rate": audio_b.buffer.sample_rate,
-                "channels": audio_b.buffer.channels,
-            },
-            "comparison": {
-                "duration_difference": audio_a.buffer.duration_seconds - audio_b.buffer.duration_seconds,
-                "sample_rate_match": audio_a.buffer.sample_rate == audio_b.buffer.sample_rate,
-            }
-        });
+        // Use AnalysisEngine for comparison
+        let comparison_result = self.engine.compare(&audio_a, &audio_b).await;
 
-        Ok(comparison)
+        Ok(serde_json::to_value(comparison_result)
+            .unwrap_or_else(|_| json!({"error": "Failed to serialize comparison"})))
     }
 
     async fn get_job_status_impl(&self, params: serde_json::Value) -> Result<serde_json::Value, McpError> {
@@ -324,6 +174,12 @@ impl FerrousWavesMcp {
             .map_err(|e| crate::utils::error::FerrousError::Mcp(format!("MCP server error: {}", e)))?;
 
         Ok(())
+    }
+}
+
+impl Default for FerrousWavesMcp {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
