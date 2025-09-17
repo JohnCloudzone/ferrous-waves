@@ -25,7 +25,7 @@ cargo bench --bench <specific_benchmark>
 # Check code quality
 cargo fmt -- --check
 cargo clippy -- -D warnings
-cargo clippy --all-features -- -D warnings
+cargo clippy --all-targets --all-features -- -D warnings
 
 # Run the main binary
 cargo run -- analyze <audio_file>
@@ -35,7 +35,9 @@ cargo run -- mcp start
 RUST_LOG=debug cargo run -- analyze test.wav
 
 # Run specific examples
-cargo run --example <example_name> -- <args>
+cargo run --example generate_samples  # Generate test WAV files
+cargo run --example basic_analysis
+cargo run --example envelope_visualization  # Creates PNG with peak/RMS envelopes
 
 # Generate documentation
 cargo doc --open
@@ -60,17 +62,15 @@ The project follows a modular architecture with clear separation of concerns:
 - **`src/analysis/`**: Core analysis algorithms
   - `spectral/`: FFT, STFT, mel-scale spectrograms
   - `temporal/`: Onset detection, beat tracking, tempo estimation
-  - `features/`: Audio feature extraction (MFCC, spectral features)
-  - `engine.rs`: Main analysis orchestrator
+  - `engine.rs`: Main analysis orchestrator with result types
 
 - **`src/mcp/`**: Model Context Protocol integration
-  - `server.rs`: MCP server implementation with tool handlers
-  - `tools.rs`: Tool definitions and result structures
-  - `handlers.rs`: Async handlers for batch and watch operations
+  - `server.rs`: Complete MCP server implementation with all handlers and tool logic
 
 - **`src/visualization/`**: Audio data visualization
   - `renderer.rs`: Plotters-based visualization engine
-  - Generates waveforms, spectrograms, power curves
+  - `waveform.rs`: Waveform and envelope rendering (peak/RMS analysis)
+  - Generates waveforms, spectrograms, power curves, envelope visualizations
 
 - **`src/cache/`**: Performance optimization
   - Content-based caching with Blake3 hashing
@@ -122,21 +122,17 @@ max_file_size_mb = 500
 
 ## Implementation Status
 
-The project is designed following the comprehensive guide in `docs/guide.md` which breaks down implementation into 13 phases:
+The project is fully implemented with the following components:
 
-1. Project Foundation (Cargo.toml, error handling, config)
-2. Audio Decoding Pipeline (Symphonia integration)
-3. FFT and Spectral Analysis (rustfft, STFT)
-4. Temporal Analysis (onset/beat detection)
-5. MCP Server Implementation
-6. Visualization Generation (Plotters)
-7. Cache System
-8. Analysis Engine Integration
-9. Feature Extraction
-10. CLI Interface
-11. Testing Suite
-12. Documentation
-13. Final Integration
+✅ Audio decoding (WAV, MP3, FLAC, OGG, M4A via Symphonia)
+✅ Spectral analysis (FFT, STFT, Mel-scale spectrograms)
+✅ Temporal analysis (onset detection, beat tracking, tempo estimation)
+✅ Visualization (waveforms, spectrograms, power curves, envelope analysis)
+✅ MCP server with tools (analyze_audio, compare_audio, get_job_status)
+✅ Cache system (content-based with BLAKE3 hashing)
+✅ CLI with commands (analyze, compare, tempo, onsets, batch, serve, cache management)
+✅ Comprehensive test suite (92+ tests)
+✅ Examples including envelope visualization and WAV generation
 
 ## Testing Strategy
 
