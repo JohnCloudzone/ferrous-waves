@@ -689,7 +689,11 @@ impl FingerprintGenerator {
         let mut freq_energy = vec![0.0; spectrogram.shape()[0]];
 
         // Sum energy across time for each frequency bin
-        for (row_idx, energy) in freq_energy.iter_mut().enumerate().take(spectrogram.shape()[0]) {
+        for (row_idx, energy) in freq_energy
+            .iter_mut()
+            .enumerate()
+            .take(spectrogram.shape()[0])
+        {
             *energy = spectrogram.row(row_idx).sum();
         }
 
