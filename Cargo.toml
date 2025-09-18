@@ -67,6 +67,7 @@ criterion = "0.5"
 pretty_assertions = "1.4"
 tempfile = "3.8"
 fastrand = "2.0"
+rand = "0.8"
 
 [profile.release]
 opt-level = 3

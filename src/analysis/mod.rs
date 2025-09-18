@@ -3,6 +3,7 @@ pub mod engine;
 pub mod fingerprint;
 pub mod musical;
 pub mod perceptual;
+pub mod pitch;
 pub mod quality;
 pub mod segments;
 pub mod spectral;

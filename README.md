@@ -7,6 +7,7 @@ High-fidelity audio analysis bridge for development workflows. Analyze audio fil
 - **Multi-format Support**: WAV, MP3, FLAC, OGG, M4A
 - **Spectral Analysis**: FFT/STFT, mel-scale spectrograms, spectral features
 - **Temporal Analysis**: Tempo detection, beat tracking, onset detection
+- **Pitch Detection**: YIN/PYIN algorithms, vibrato analysis, pitch tracking
 - **Perceptual Metrics**: LUFS loudness measurement (EBU R 128), true peak detection, dynamic range analysis
 - **Content Classification**: Speech/music/silence detection with confidence scores
 - **Musical Analysis**: Key detection with confidence, chord progression, harmonic complexity
@@ -77,6 +78,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Peak amplitude: {}", result.summary.peak_amplitude);
     println!("Loudness: {:.1} LUFS", result.perceptual.loudness_lufs);
     println!("True peak: {:.1} dBFS", result.perceptual.true_peak_dbfs);
+    println!("Average pitch: {:?} Hz", result.pitch.mean_pitch);
+    println!("Vibrato: {:?}", result.pitch.vibrato);
     println!("Content type: {:?}", result.classification.primary_type);
     println!("Audio quality score: {:.1}%", result.quality.overall_score * 100.0);
     println!("Fingerprint hash: {:016x}", result.fingerprint.perceptual_hash);
@@ -140,6 +143,7 @@ src/
 ├── analysis/       # Core analysis engine
 │   ├── spectral/   # FFT, STFT, mel-scale processing
 │   ├── temporal/   # Beat tracking, onset detection
+│   ├── pitch/      # YIN/PYIN pitch detection, vibrato analysis
 │   ├── perceptual.rs # LUFS, dynamic range, psychoacoustic metrics
 │   ├── classification.rs # Speech/music/silence detection
 │   ├── musical.rs  # Key detection, chord progression, harmonic analysis
@@ -224,6 +228,9 @@ cargo run --example batch_processing
 
 # Envelope visualization (creates PNG)
 cargo run --example envelope_visualization
+
+# Pitch detection (YIN/PYIN algorithms)
+cargo run --example pitch_detection
 ```
 
 See [examples/README.md](examples/README.md) for more details.

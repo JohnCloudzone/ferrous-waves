@@ -2,6 +2,7 @@ use crate::analysis::classification::{ContentClassification, ContentClassifier};
 use crate::analysis::fingerprint::{AudioFingerprint, FingerprintGenerator};
 use crate::analysis::musical::{MusicalAnalysis, MusicalAnalyzer};
 use crate::analysis::perceptual::{calculate_perceptual_metrics, PerceptualMetrics};
+use crate::analysis::pitch::{PitchDetector, PitchTrack, PyinDetector, VibratoAnalysis};
 use crate::analysis::quality::{QualityAnalyzer, QualityAssessment};
 use crate::analysis::segments::{SegmentAnalysis, SegmentAnalyzer};
 use crate::analysis::spectral::{StftProcessor, WindowFunction};
@@ -19,6 +20,7 @@ pub struct AnalysisResult {
     pub summary: AudioSummary,
     pub spectral: SpectralAnalysis,
     pub temporal: TemporalAnalysis,
+    pub pitch: PitchAnalysis,
     pub perceptual: PerceptualMetrics,
     pub classification: ContentClassification,
     pub musical: MusicalAnalysis,
@@ -57,6 +59,16 @@ pub struct TemporalAnalysis {
     pub onsets: Vec<f32>,
     pub tempo_stability: f32,
     pub rhythmic_complexity: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PitchAnalysis {
+    pub mean_pitch: Option<f32>,
+    pub pitch_range: (f32, f32),
+    pub pitch_track: PitchTrack,
+    pub vibrato: Option<VibratoAnalysis>,
+    pub pitch_stability: f32,
+    pub dominant_pitch: Option<f32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -488,6 +500,86 @@ impl AnalysisEngine {
             recommendations.push("Consider adding more dynamic variation".to_string());
         }
 
+        // Pitch detection
+        let pitch_detector = PyinDetector::new();
+        let hop_size_pitch = 512;
+        let pitch_track = pitch_detector.detect_pitch_track(
+            &mono,
+            audio.buffer.sample_rate as f32,
+            hop_size_pitch,
+        );
+
+        let valid_pitches: Vec<f32> = pitch_track
+            .frames
+            .iter()
+            .filter_map(|f| f.frequency)
+            .collect();
+
+        let (mean_pitch, pitch_range, pitch_stability, dominant_pitch) =
+            if !valid_pitches.is_empty() {
+                let mean = valid_pitches.iter().sum::<f32>() / valid_pitches.len() as f32;
+                let min = valid_pitches.iter().fold(f32::INFINITY, |a, &b| a.min(b));
+                let max = valid_pitches
+                    .iter()
+                    .fold(f32::NEG_INFINITY, |a, &b| a.max(b));
+
+                // Calculate pitch stability
+                let stability = if valid_pitches.len() > 1 {
+                    let diffs: Vec<f32> = valid_pitches
+                        .windows(2)
+                        .map(|w| (w[1] - w[0]).abs())
+                        .collect();
+                    let mean_diff = diffs.iter().sum::<f32>() / diffs.len() as f32;
+                    1.0 - (mean_diff / mean).min(1.0)
+                } else {
+                    0.0
+                };
+
+                // Find dominant pitch (most common)
+                let mut pitch_counts = std::collections::HashMap::new();
+                for &pitch in &valid_pitches {
+                    let bin = (pitch / 10.0).round() as i32;
+                    *pitch_counts.entry(bin).or_insert(0) += 1;
+                }
+                let dominant = pitch_counts
+                    .into_iter()
+                    .max_by_key(|&(_, count)| count)
+                    .map(|(bin, _)| bin as f32 * 10.0);
+
+                (Some(mean), (min, max), stability, dominant)
+            } else {
+                (None, (0.0, 0.0), 0.0, None)
+            };
+
+        // Vibrato detection
+        let vibrato = if !valid_pitches.is_empty() {
+            let vibrato_detector = crate::analysis::pitch::VibratoDetector::new();
+            vibrato_detector.analyze(
+                &valid_pitches,
+                audio.buffer.sample_rate as f32,
+                hop_size_pitch,
+            )
+        } else {
+            None
+        };
+
+        // Add pitch insights
+        if let Some(pitch) = mean_pitch {
+            insights.push(format!("Average pitch: {:.1} Hz", pitch));
+            if pitch_stability > 0.8 {
+                insights.push("Stable pitch detected".to_string());
+            } else if pitch_stability < 0.5 {
+                insights.push("Variable pitch detected".to_string());
+            }
+        }
+
+        if let Some(ref vib) = vibrato {
+            insights.push(format!(
+                "Vibrato detected: {:.1} Hz rate, {:.1} cents depth",
+                vib.rate, vib.depth_cents
+            ));
+        }
+
         let result = AnalysisResult {
             summary: AudioSummary {
                 duration: audio.buffer.duration_seconds,
@@ -511,6 +603,14 @@ impl AnalysisEngine {
                 onsets: onsets.clone(),
                 tempo_stability,
                 rhythmic_complexity: onsets.len() as f32 / audio.buffer.duration_seconds,
+            },
+            pitch: PitchAnalysis {
+                mean_pitch,
+                pitch_range,
+                pitch_track,
+                vibrato,
+                pitch_stability,
+                dominant_pitch,
             },
             visuals: VisualsData {
                 waveform: waveform_base64,
